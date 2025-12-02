@@ -44,7 +44,8 @@ export function calculateStreaks(contributionCalendar) {
     
     if (day.contributionCount > 0) {
       currentStreak++;
-    } else if (dayDate < today) {
+    } else {
+      // Stop at first day without contributions
       break;
     }
   }

@@ -1,6 +1,7 @@
 import { THEMES } from '../config/themes.js';
 import { calculateRank, calculateStreaks, calculateWeekendWarrior, getWeekendBadgeLevel, calculateAccountAge } from '../utils/calculations.js';
 import { generateParticles, assignPersona } from '../utils/helpers.js';
+import { getLanguageColor } from '../utils/languages.js';
 import { renderIdentity } from '../components/identity.js';
 import { renderStreaks } from '../components/streaks.js';
 import { renderWeekend } from '../components/weekend.js';
@@ -96,18 +97,7 @@ export function generateSVG(userData, themeName = 'default', chaos = 3, customRe
   
   // Random rotations for chaos (limited)
   const chaosRotation = Math.min(chaos, 5);
-  const rotations = [
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation,
-    (Math.random() - 0.5) * chaosRotation
-  ];
+  const rotations = Array.from({ length: 10 }, () => (Math.random() - 0.5) * chaosRotation);
   
   // Build data object
   const data = {
@@ -195,29 +185,4 @@ export function generateSVG(userData, themeName = 'default', chaos = 3, customRe
   
   ${components}
 </svg>`.trim();
-}
-
-function getLanguageColor(language) {
-  const colors = {
-    'JavaScript': '#f1e05a',
-    'TypeScript': '#3178c6',
-    'Python': '#3572A5',
-    'Java': '#b07219',
-    'Go': '#00ADD8',
-    'Rust': '#dea584',
-    'C++': '#f34b7d',
-    'C': '#555555',
-    'C#': '#178600',
-    'PHP': '#4F5D95',
-    'Ruby': '#701516',
-    'Swift': '#F05138',
-    'Kotlin': '#A97BFF',
-    'Dart': '#00B4AB',
-    'HTML': '#e34c26',
-    'CSS': '#563d7c',
-    'Shell': '#89e051',
-    'Jupyter Notebook': '#DA5B0B'
-  };
-  
-  return colors[language] || '#858585';
 }

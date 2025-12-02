@@ -1,7 +1,6 @@
 import { fetchGitHubData } from './utils/github.js';
 import { generateSVG } from './generators/svg.js';
 import { generateErrorSVG } from './generators/error.js';
-import { THEMES } from './config/themes.js';
 
 export default async function handler(req, res) {
   // CORS headers
