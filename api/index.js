@@ -522,7 +522,7 @@ function generateSVG(userData, theme, chaos, customRepos) {
   
   // Generate chaos rotation values (seeded by username for consistency)
   const chaosLevel = Math.min(Math.max(chaos, 0), 10);
-  const seed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const seed = userData.login.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const chaosRandom = seededRandom(seed + 1000);
   const rotations = Array(12).fill(0).map(() => 
     (chaosRandom() - 0.5) * chaosLevel * 2
