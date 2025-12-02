@@ -299,13 +299,12 @@ function calculateStreaks(contributionCalendar) {
 
 // Assign persona based on stats
 function assignPersona(stats) {
-  const { commits, prs, reviews, stars, followers, discussionComments = 0 } = stats;
+  const { commits, prs, reviews, stars, followers } = stats;
   
   if (reviews > commits * 0.3) return 'Code Guardian';
   if (stars > 100) return 'Star Collector';
   if (prs > 100) return 'PR Machine';
   if (prs > 50) return 'Merge Master';
-  if (discussionComments > 30) return 'Community Voice';
   if (commits > 1000) return 'Commit Legend';
   if (commits > 500) return 'Code Warrior';
   if (followers > 50) return 'Influencer';
@@ -347,6 +346,9 @@ const ICONS = {
   sun: '<circle cx="8" cy="8" r="3"/><path d="M8 1v2m0 10v2M1 8h2m10 0h2M3 3l1.5 1.5m8 8L14 14M14 3l-1.5 1.5m-8 8L3 14"/>',
   award: '<circle cx="8" cy="7" r="4"/><path d="M5 11l1 4 2-2 2 2 1-4"/>'
 };
+
+// Constants
+const MAX_REPO_NAME_LENGTH = 20;
 
 // Generate SVG card
 function generateSVG(userData, theme, chaos, customRepos) {
@@ -578,7 +580,7 @@ function generateSVG(userData, theme, chaos, customRepos) {
     ${topRepos.map((repo, i) => `
       <g transform="translate(15, ${42 + i * 25})">
         <use href="#icon-repo" width="12" height="12" fill="${t.accent}"/>
-        <text x="18" y="10" font-size="11" fill="${t.text}" font-weight="600">${repo.name.length > 20 ? repo.name.substring(0, 20) + '...' : repo.name}</text>
+        <text x="18" y="10" font-size="11" fill="${t.text}" font-weight="600">${repo.name.length > MAX_REPO_NAME_LENGTH ? repo.name.substring(0, MAX_REPO_NAME_LENGTH) + '...' : repo.name}</text>
         <text x="18" y="22" font-size="9" fill="${t.textSec}">⭐ ${repo.stargazerCount.toLocaleString()} 🍴 ${repo.forkCount.toLocaleString()}</text>
       </g>
     `).join('')}
@@ -653,6 +655,14 @@ function generateErrorSVG(message, theme = 'default') {
 // Main handler
 export default async function handler(req, res) {
   try {
+    // Handle OPTIONS request for CORS
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      return res.status(200).end();
+    }
+    
     // Parse query parameters
     const url = new URL(req.url, `http://${req.headers.host}`);
     const username = url.searchParams.get('username');
