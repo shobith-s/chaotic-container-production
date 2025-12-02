@@ -1,3 +1,5 @@
+import { RANKS } from '../config/ranks.js';
+
 export function renderRank(data, theme, rotation) {
   const { rankInfo } = data;
   const t = theme;
@@ -33,7 +35,8 @@ export function renderRank(data, theme, rotation) {
 }
 
 function getNextRank(currentRank) {
-  const ranks = ['C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'A++', 'S-', 'S', 'S+'];
+  // Derive rank progression from RANKS config
+  const ranks = Object.keys(RANKS).sort((a, b) => RANKS[a].level - RANKS[b].level);
   const currentIndex = ranks.indexOf(currentRank);
   if (currentIndex === -1 || currentIndex === ranks.length - 1) {
     return 'MAX';
@@ -42,13 +45,8 @@ function getNextRank(currentRank) {
 }
 
 function getNextRankScore(currentRank, currentScore) {
-  const levels = {
-    'C-': 25, 'C': 50, 'C+': 100, 'B-': 200, 'B': 300, 'B+': 500,
-    'A-': 750, 'A': 1000, 'A+': 1500, 'A++': 2500, 'S-': 5000, 'S': 10000, 'S+': 10000
-  };
-  
   const nextRank = getNextRank(currentRank);
   if (nextRank === 'MAX') return 0;
   
-  return levels[nextRank] - currentScore;
+  return RANKS[nextRank].level - currentScore;
 }
