@@ -1,7 +1,1084 @@
-import { fetchGitHubData } from './utils/github.js';
-import { generateSVG } from './generators/svg.js';
-import { generateErrorSVG } from './generators/error.js';
+// ============================================================================
+// SECTION 1: CONFIGURATION - THEMES
+// ============================================================================
+const THEMES = {
+  default: {
+    bg: ['#0d1117', '#161b22'],
+    container: '#0d1117',
+    border: '#30363d',
+    card: '#161b22',
+    cardBorder: '#30363d',
+    text: '#e6edf3',
+    textSec: '#8b949e',
+    accent: '#58a6ff',
+    accent2: '#1f6feb',
+    green: '#3fb950',
+    yellow: '#d29922',
+    gradient1: '#58a6ff',
+    gradient2: '#bc8cff'
+  },
+  dracula: {
+    bg: ['#282a36', '#21222c'],
+    container: '#282a36',
+    border: '#6272a4',
+    card: '#44475a',
+    cardBorder: '#6272a4',
+    text: '#f8f8f2',
+    textSec: '#6272a4',
+    accent: '#ff79c6',
+    accent2: '#bd93f9',
+    green: '#50fa7b',
+    yellow: '#f1fa8c',
+    gradient1: '#ff79c6',
+    gradient2: '#bd93f9'
+  },
+  nord: {
+    bg: ['#2e3440', '#3b4252'],
+    container: '#2e3440',
+    border: '#4c566a',
+    card: '#3b4252',
+    cardBorder: '#4c566a',
+    text: '#eceff4',
+    textSec: '#d8dee9',
+    accent: '#88c0d0',
+    accent2: '#81a1c1',
+    green: '#a3be8c',
+    yellow: '#ebcb8b',
+    gradient1: '#88c0d0',
+    gradient2: '#5e81ac'
+  },
+  tokyonight: {
+    bg: ['#1a1b26', '#16161e'],
+    container: '#1a1b26',
+    border: '#414868',
+    card: '#24283b',
+    cardBorder: '#414868',
+    text: '#c0caf5',
+    textSec: '#9aa5ce',
+    accent: '#7aa2f7',
+    accent2: '#bb9af7',
+    green: '#9ece6a',
+    yellow: '#e0af68',
+    gradient1: '#7aa2f7',
+    gradient2: '#bb9af7'
+  },
+  synthwave: {
+    bg: ['#2b213a', '#241b2f'],
+    container: '#2b213a',
+    border: '#ff7edb',
+    card: '#34294f',
+    cardBorder: '#ff7edb',
+    text: '#fede5d',
+    textSec: '#fe4450',
+    accent: '#f92aad',
+    accent2: '#fe4450',
+    green: '#72f1b8',
+    yellow: '#fede5d',
+    gradient1: '#f92aad',
+    gradient2: '#fe4450'
+  },
+  monokai: {
+    bg: ['#272822', '#1e1f1c'],
+    container: '#272822',
+    border: '#75715e',
+    card: '#3e3d32',
+    cardBorder: '#75715e',
+    text: '#f8f8f2',
+    textSec: '#75715e',
+    accent: '#66d9ef',
+    accent2: '#ae81ff',
+    green: '#a6e22e',
+    yellow: '#f4bf75',
+    gradient1: '#66d9ef',
+    gradient2: '#ae81ff'
+  },
+  github_dark: {
+    bg: ['#0d1117', '#010409'],
+    container: '#0d1117',
+    border: '#30363d',
+    card: '#161b22',
+    cardBorder: '#30363d',
+    text: '#e6edf3',
+    textSec: '#8b949e',
+    accent: '#2f81f7',
+    accent2: '#58a6ff',
+    green: '#3fb950',
+    yellow: '#d29922',
+    gradient1: '#2f81f7',
+    gradient2: '#bc8cff'
+  },
+  catppuccin: {
+    bg: ['#1e1e2e', '#181825'],
+    container: '#1e1e2e',
+    border: '#6c7086',
+    card: '#313244',
+    cardBorder: '#6c7086',
+    text: '#cdd6f4',
+    textSec: '#a6adc8',
+    accent: '#89b4fa',
+    accent2: '#cba6f7',
+    green: '#a6e3a1',
+    yellow: '#f9e2af',
+    gradient1: '#89b4fa',
+    gradient2: '#cba6f7'
+  }
+};
 
+// ============================================================================
+// SECTION 2: CONFIGURATION - COLORS & RANKS
+// ============================================================================
+const COLOR_PALETTE = {
+  primary: '#58a6ff',
+  success: '#3fb950',
+  warning: '#d29922',
+  danger: '#f85149',
+  purple: '#bc8cff',
+  cyan: '#39c5cf'
+};
+
+const RANKS = {
+  'S+': { level: 10000, title: 'Legendary Contributor', color: '#ff6b6b' },
+  'S': { level: 5000, title: 'Elite Developer', color: '#ee5a6f' },
+  'S-': { level: 2500, title: 'Master Coder', color: '#f06595' },
+  'A++': { level: 1500, title: 'Senior Expert', color: '#cc5de8' },
+  'A+': { level: 1000, title: 'Expert Developer', color: '#845ef7' },
+  'A': { level: 750, title: 'Advanced Developer', color: '#5f3dc4' },
+  'A-': { level: 500, title: 'Skilled Developer', color: '#7950f2' },
+  'B+': { level: 300, title: 'Intermediate Developer', color: '#4c6ef5' },
+  'B': { level: 200, title: 'Regular Contributor', color: '#4dabf7' },
+  'B-': { level: 100, title: 'Active Developer', color: '#3bc9db' },
+  'C+': { level: 50, title: 'Growing Developer', color: '#22b8cf' },
+  'C': { level: 25, title: 'New Contributor', color: '#15aabf' },
+  'C-': { level: 0, title: 'Beginner', color: '#1098ad' }
+};
+
+// ============================================================================
+// SECTION 3: SVG ICONS
+// ============================================================================
+const ICONS = {
+  flame: '<path d="M12.83 7.17A4 4 0 0 1 14 10a4 4 0 0 1-8 0 4 4 0 0 1 1.17-2.83L10 4l2.83 3.17z"/>',
+  trophy: '<path d="M6 9H3.5a2.5 2.5 0 1 1 0-5H6m6 5h2.5a2.5 2.5 0 1 0 0-5H12M6 9v5a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V9M6 4h8v5H6z"/>',
+  star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+  pr: '<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M6 9v12"/>',
+  eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  bolt: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  repo: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  commit: '<circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/>',
+  fork: '<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9M12 12v3"/>',
+  sun: '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+  award: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
+  issue: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+};
+
+// ============================================================================
+// SECTION 4: GRAPHQL QUERY
+// ============================================================================
+const USER_QUERY = `
+  query($username: String!) {
+    user(login: $username) {
+      name
+      login
+      createdAt
+      contributionsCollection {
+        totalCommitContributions
+        totalIssueContributions
+        totalPullRequestContributions
+        totalPullRequestReviewContributions
+        restrictedContributionsCount
+        contributionCalendar {
+          totalContributions
+          weeks {
+            contributionDays {
+              contributionCount
+              date
+              weekday
+            }
+          }
+        }
+      }
+      repositoriesContributedTo(first: 1, contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY]) {
+        totalCount
+      }
+      pullRequests(first: 1) {
+        totalCount
+      }
+      openIssues: issues(states: OPEN) {
+        totalCount
+      }
+      closedIssues: issues(states: CLOSED) {
+        totalCount
+      }
+      followers {
+        totalCount
+      }
+      repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}) {
+        totalCount
+        nodes {
+          name
+          stargazers {
+            totalCount
+          }
+          forkCount
+          primaryLanguage {
+            name
+            color
+          }
+        }
+      }
+    }
+  }
+`;
+
+// ============================================================================
+// SECTION 5: GITHUB API FUNCTIONS
+// ============================================================================
+async function fetchGitHubData(username, token) {
+  const response = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      query: USER_QUERY,
+      variables: { username }
+    })
+  });
+
+  const data = await response.json();
+  
+  if (data.errors) {
+    throw new Error(data.errors[0].message);
+  }
+  
+  if (!data.data || !data.data.user) {
+    throw new Error('User not found');
+  }
+  
+  return data.data.user;
+}
+
+function getLanguageColor(language) {
+  const colors = {
+    'JavaScript': '#f1e05a',
+    'TypeScript': '#3178c6',
+    'Python': '#3572A5',
+    'Java': '#b07219',
+    'Go': '#00ADD8',
+    'Rust': '#dea584',
+    'C++': '#f34b7d',
+    'C': '#555555',
+    'C#': '#178600',
+    'PHP': '#4F5D95',
+    'Ruby': '#701516',
+    'Swift': '#F05138',
+    'Kotlin': '#A97BFF',
+    'Dart': '#00B4AB',
+    'HTML': '#e34c26',
+    'CSS': '#563d7c',
+    'Shell': '#89e051',
+    'Jupyter Notebook': '#DA5B0B'
+  };
+  
+  return colors[language] || '#858585';
+}
+
+// ============================================================================
+// SECTION 6: CALCULATION FUNCTIONS
+// ============================================================================
+function calculateRank(score) {
+  const ranks = Object.entries(RANKS).sort((a, b) => b[1].level - a[1].level);
+  
+  for (const [rank, data] of ranks) {
+    if (score >= data.level) {
+      return {
+        rank,
+        title: data.title,
+        color: data.color,
+        level: data.level,
+        score
+      };
+    }
+  }
+  
+  return {
+    rank: 'C-',
+    title: RANKS['C-'].title,
+    color: RANKS['C-'].color,
+    level: 0,
+    score
+  };
+}
+
+function calculateStreaks(contributionCalendar) {
+  const weeks = contributionCalendar?.weeks ?? [];
+  const allDays = weeks.flatMap(week => week.contributionDays);
+  
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let mostActiveDay = { date: '', count: 0 };
+  
+  // Calculate current streak (from today backwards)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  for (let i = allDays.length - 1; i >= 0; i--) {
+    const day = allDays[i];
+    const dayDate = new Date(day.date);
+    dayDate.setHours(0, 0, 0, 0);
+    
+    if (day.contributionCount > 0) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+  
+  // Calculate longest streak and most active day
+  for (const day of allDays) {
+    if (day.contributionCount > 0) {
+      tempStreak++;
+      longestStreak = Math.max(longestStreak, tempStreak);
+      
+      if (day.contributionCount > mostActiveDay.count) {
+        mostActiveDay = { date: day.date, count: day.contributionCount };
+      }
+    } else {
+      tempStreak = 0;
+    }
+  }
+  
+  // Last 7 days
+  const last7Days = allDays.slice(-7);
+  
+  return {
+    currentStreak,
+    longestStreak,
+    mostActiveDay,
+    last7Days,
+    allDays
+  };
+}
+
+function calculateWeekendWarrior(days) {
+  const weekendDays = days.filter(d => d.weekday === 0 || d.weekday === 6);
+  const weekendContributions = weekendDays.reduce((sum, d) => sum + d.contributionCount, 0);
+  const totalContributions = days.reduce((sum, d) => sum + d.contributionCount, 0);
+  
+  if (totalContributions === 0) return 0;
+  
+  return Math.round((weekendContributions / totalContributions) * 100);
+}
+
+function getWeekendBadgeLevel(percent) {
+  if (percent >= 40) {
+    return { level: 'Gold', color: '#ffd700' };
+  } else if (percent >= 30) {
+    return { level: 'Silver', color: '#c0c0c0' };
+  } else if (percent >= 20) {
+    return { level: 'Bronze', color: '#cd7f32' };
+  }
+  return { level: 'None', color: '#666666' };
+}
+
+function calculateAccountAge(createdAt) {
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffYears = (now - created) / (1000 * 60 * 60 * 24 * 365.25);
+  const years = Math.floor(diffYears);
+  const months = Math.floor((diffYears - years) * 12);
+  
+  let displayText = '';
+  if (years > 0) {
+    displayText = `${years}y ${months}m`;
+  } else {
+    displayText = `${months}m`;
+  }
+  
+  return {
+    years: diffYears,
+    displayText,
+    estYear: created.getFullYear()
+  };
+}
+
+// ============================================================================
+// SECTION 7: HELPER FUNCTIONS
+// ============================================================================
+function seededRandom(seed) {
+  let state = seed;
+  return function() {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+}
+
+function generateParticles(username, count, width, height) {
+  const seed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const random = seededRandom(seed);
+  
+  const particles = [];
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: random() * width,
+      y: random() * height,
+      size: 1 + random() * 2,
+      opacity: 0.1 + random() * 0.3
+    });
+  }
+  
+  return particles;
+}
+
+function assignPersona(stats) {
+  const {
+    commits = 0,
+    prs = 0,
+    reviews = 0,
+    issues = 0,
+    stars = 0
+  } = stats;
+  
+  // Calculate ratios
+  const reviewRatio = prs > 0 ? reviews / prs : 0;
+  const prRatio = commits > 0 ? prs / commits : 0;
+  
+  // Assign persona based on activity patterns
+  if (reviews > 100 && reviewRatio > 0.5) {
+    return 'Code Guardian';
+  } else if (prs > 500) {
+    return 'PR Ninja';
+  } else if (commits > 2000) {
+    return 'Commit Machine';
+  } else if (stars > 1000) {
+    return 'Star Collector';
+  } else if (issues > 200) {
+    return 'Issue Hunter';
+  } else if (prRatio > 0.3) {
+    return 'Quality Contributor';
+  } else if (commits > 500) {
+    return 'Active Developer';
+  } else if (commits > 100) {
+    return 'Regular Contributor';
+  } else if (commits > 10) {
+    return 'Rising Star';
+  } else {
+    return 'New Explorer';
+  }
+}
+
+// ============================================================================
+// SECTION 8: SVG COMPONENT RENDERERS
+// ============================================================================
+function renderTitle(data, theme) {
+  const { login } = data;
+  const t = theme;
+  
+  return `
+  <g transform="translate(450, 10)">
+    <text x="0" y="0" font-size="16" font-weight="800" fill="${t.accent}" text-anchor="middle">
+      <tspan>🌪️ GitHub Entropy Stats</tspan>
+    </text>
+    <text x="0" y="16" font-size="10" fill="${t.textSec}" text-anchor="middle">@${login}</text>
+  </g>`;
+}
+
+function renderIdentity(data, theme, rotation) {
+  const { name, login, persona, rankInfo } = data;
+  const t = theme;
+  
+  return `
+  <g transform="translate(30, 30) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">👤 Identity</text>
+    <text x="15" y="58" font-size="18" font-weight="800" fill="${t.accent}">${name || login}</text>
+    <text x="15" y="78" font-size="12" fill="${t.textSec}">@${login}</text>
+    <text x="15" y="103" font-size="13" font-weight="600" fill="${t.yellow}">✨ ${persona}</text>
+    <g transform="translate(15, 115)">
+      <rect width="60" height="20" rx="10" fill="${rankInfo.color}" fill-opacity="0.2" stroke="${rankInfo.color}" stroke-width="1"/>
+      <text x="30" y="14" font-size="11" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" filter="url(#glow)">${rankInfo.rank}</text>
+    </g>
+  </g>`;
+}
+
+function renderStreaks(data, theme, rotation) {
+  const { streaks, totalContributions } = data;
+  const t = theme;
+  
+  const currentStreak = streaks.currentStreak ?? 0;
+  const longestStreak = streaks.longestStreak ?? 0;
+  const mostActiveDay = streaks.mostActiveDay ?? { date: '', count: 0 };
+  
+  const mostActiveDate = mostActiveDay.date ? new Date(mostActiveDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+  
+  return `
+  <g transform="translate(310, 30) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">🔥 Streaks &amp; Activity</text>
+    
+    <g transform="translate(15, 50)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">
+        ${ICONS.flame}
+      </svg>
+      <text x="28" y="15" font-size="13" fill="${t.textSec}">Current:</text>
+      <text x="170" y="15" font-size="14" font-weight="700" fill="${t.accent}" text-anchor="end">${currentStreak} days</text>
+    </g>
+    
+    <g transform="translate(15, 75)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${t.yellow}" stroke-width="2">
+        ${ICONS.trophy}
+      </svg>
+      <text x="28" y="15" font-size="13" fill="${t.textSec}">Longest:</text>
+      <text x="170" y="15" font-size="14" font-weight="700" fill="${t.yellow}" text-anchor="end">${longestStreak} days</text>
+    </g>
+    
+    <g transform="translate(15, 100)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${t.green}" stroke-width="2">
+        ${ICONS.calendar}
+      </svg>
+      <text x="28" y="15" font-size="13" fill="${t.textSec}">Most Active:</text>
+      <text x="170" y="15" font-size="14" font-weight="700" fill="${t.green}" text-anchor="end">${mostActiveDate}</text>
+    </g>
+    
+    <text x="15" y="130" font-size="11" fill="${t.textSec}">Total: ${totalContributions.toLocaleString()} contributions</text>
+  </g>`;
+}
+
+function renderWeekend(data, theme, rotation) {
+  const { weekendPercent, weekendBadge } = data;
+  const t = theme;
+  
+  if (weekendBadge.level === 'None') {
+    return '';
+  }
+  
+  return `
+  <g transform="translate(590, 30) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">🏆 Weekend Warrior</text>
+    
+    <g transform="translate(90, 50)">
+      <circle cx="0" cy="0" r="35" fill="${weekendBadge.color}" fill-opacity="0.2" stroke="${weekendBadge.color}" stroke-width="2"/>
+      <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${weekendBadge.color}" stroke-width="2">
+        ${ICONS.award}
+      </svg>
+    </g>
+    
+    <text x="125" y="95" font-size="18" font-weight="800" fill="${weekendBadge.color}" text-anchor="middle">${weekendPercent}%</text>
+    <text x="125" y="112" font-size="12" fill="${t.textSec}" text-anchor="middle">${weekendBadge.level} Badge</text>
+    <text x="125" y="130" font-size="10" fill="${t.textSec}" text-anchor="middle">Weekend Contributions</text>
+  </g>`;
+}
+
+function renderStats(data, theme, rotation) {
+  const { commits, prs, reviews, issues } = data;
+  const t = theme;
+  
+  return `
+  <g transform="translate(30, 200) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">📊 Core Stats</text>
+    
+    <g transform="translate(15, 50)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.success}" stroke-width="2">
+        ${ICONS.commit}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Commits:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.success}" text-anchor="end">${commits.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(15, 73)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.primary}" stroke-width="2">
+        ${ICONS.pr}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Pull Requests:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.primary}" text-anchor="end">${prs.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(15, 96)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.warning}" stroke-width="2">
+        ${ICONS.eye}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Reviews:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.warning}" text-anchor="end">${reviews.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(15, 119)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.danger}" stroke-width="2">
+        ${ICONS.issue}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Issues:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.danger}" text-anchor="end">${issues.toLocaleString()}</text>
+    </g>
+  </g>`;
+}
+
+function renderDistribution(data, theme, rotation) {
+  const { last7Days } = data;
+  const t = theme;
+  
+  if (!last7Days || last7Days.length === 0) {
+    return '';
+  }
+  
+  const total = last7Days.reduce((sum, d) => sum + (d.contributionCount ?? 0), 0);
+  
+  if (total === 0) {
+    return '';
+  }
+  
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const colors = ['#f85149', '#fb8500', '#ffb703', '#8ecae6', '#219ebc', '#023047', '#bc6c25'];
+  
+  let currentAngle = -90;
+  const radius = 45;
+  const centerX = 125;
+  const centerY = 70;
+  
+  let segments = '';
+  let legend = '';
+  let legendY = 45;
+  
+  last7Days.forEach((day, i) => {
+    const count = day.contributionCount ?? 0;
+    const percentage = (count / total) * 100;
+    const angle = (percentage / 100) * 360;
+    
+    if (count > 0) {
+      const startAngle = currentAngle * (Math.PI / 180);
+      const endAngle = (currentAngle + angle) * (Math.PI / 180);
+      
+      const x1 = centerX + radius * Math.cos(startAngle);
+      const y1 = centerY + radius * Math.sin(startAngle);
+      const x2 = centerX + radius * Math.cos(endAngle);
+      const y2 = centerY + radius * Math.sin(endAngle);
+      
+      const largeArc = angle > 180 ? 1 : 0;
+      
+      segments += `
+        <path d="M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z" 
+              fill="${colors[day.weekday % colors.length]}" 
+              fill-opacity="0.8" 
+              stroke="${t.cardBorder}" 
+              stroke-width="1"/>`;
+      
+      const dayName = days[day.weekday];
+      legend += `
+        <g transform="translate(160, ${legendY})">
+          <circle cx="0" cy="0" r="4" fill="${colors[day.weekday % colors.length]}"/>
+          <text x="10" y="4" font-size="10" fill="${t.textSec}">${dayName}: ${count}</text>
+        </g>`;
+      
+      legendY += 15;
+      currentAngle += angle;
+    }
+  });
+  
+  return `
+  <g transform="translate(310, 200) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">📈 Last 7 Days</text>
+    
+    <g transform="translate(10, 25)">
+      ${segments}
+      <circle cx="${centerX}" cy="${centerY}" r="25" fill="${t.card}"/>
+      <text x="${centerX}" y="${centerY}" font-size="14" font-weight="700" fill="${t.accent}" text-anchor="middle" dominant-baseline="middle">${total}</text>
+    </g>
+    
+    ${legend}
+  </g>`;
+}
+
+function renderLanguages(data, theme, rotation) {
+  const { languages } = data;
+  const t = theme;
+  
+  if (!languages || languages.length === 0) {
+    return '';
+  }
+  
+  const top5 = languages.slice(0, 5);
+  
+  let languageItems = '';
+  top5.forEach((lang, i) => {
+    const y = 50 + (i * 18);
+    const barWidth = (lang.percentage / 100) * 150;
+    
+    languageItems += `
+      <g transform="translate(15, ${y})">
+        <rect width="150" height="12" rx="6" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1"/>
+        <rect width="${barWidth}" height="12" rx="6" fill="${lang.color || t.accent}" fill-opacity="0.8"/>
+        <text x="158" y="9" font-size="10" fill="${t.textSec}">${lang.name}</text>
+        <text x="235" y="9" font-size="10" font-weight="600" fill="${t.text}" text-anchor="end">${lang.percentage.toFixed(1)}%</text>
+      </g>`;
+  });
+  
+  return `
+  <g transform="translate(590, 200) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">
+      <tspan>💻 Top Languages</tspan>
+    </text>
+    
+    ${languageItems}
+  </g>`;
+}
+
+function renderRepos(data, theme, rotation) {
+  const { repos } = data;
+  const t = theme;
+  
+  if (!repos || repos.length === 0) {
+    return '';
+  }
+  
+  const top3 = repos.slice(0, 3);
+  
+  let repoItems = '';
+  top3.forEach((repo, i) => {
+    const y = 50 + (i * 28);
+    
+    repoItems += `
+      <g transform="translate(15, ${y})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">
+          ${ICONS.repo}
+        </svg>
+        <text x="22" y="12" font-size="12" font-weight="600" fill="${t.text}">${repo.name}</text>
+        
+        <g transform="translate(0, 16)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.warning}" stroke-width="2">
+            ${ICONS.star}
+          </svg>
+          <text x="16" y="9" font-size="10" fill="${t.textSec}">${repo.stars.toLocaleString()}</text>
+          
+          <svg x="65" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.purple}" stroke-width="2">
+            ${ICONS.fork}
+          </svg>
+          <text x="81" y="9" font-size="10" fill="${t.textSec}">${repo.forks.toLocaleString()}</text>
+        </g>
+      </g>`;
+  });
+  
+  return `
+  <g transform="translate(30, 370) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">⭐ Top Repositories</text>
+    
+    ${repoItems}
+  </g>`;
+}
+
+function renderSocial(data, theme, rotation) {
+  const { followers, totalRepos, accountAge } = data;
+  const t = theme;
+  
+  return `
+  <g transform="translate(310, 370) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">👥 Social &amp; Account</text>
+    
+    <g transform="translate(15, 55)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.purple}" stroke-width="2">
+        ${ICONS.users}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Followers:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.purple}" text-anchor="end">${followers.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(15, 80)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.cyan}" stroke-width="2">
+        ${ICONS.repo}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Repositories:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.cyan}" text-anchor="end">${totalRepos.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(15, 105)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">
+        ${ICONS.calendar}
+      </svg>
+      <text x="25" y="13" font-size="12" fill="${t.textSec}">Account Age:</text>
+      <text x="160" y="13" font-size="13" font-weight="700" fill="${t.accent}" text-anchor="end">${accountAge.displayText}</text>
+    </g>
+    
+    <text x="15" y="130" font-size="10" fill="${t.textSec}">Est. ${accountAge.estYear}</text>
+  </g>`;
+}
+
+function renderRank(data, theme, rotation) {
+  const { rankInfo } = data;
+  const t = theme;
+  
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  const maxScore = 10000;
+  const percentage = Math.min((rankInfo.score / maxScore) * 100, 100);
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  const nextRank = getNextRank(rankInfo.rank);
+  const nextRankScore = getNextRankScore(rankInfo.rank, rankInfo.score);
+  
+  return `
+  <g transform="translate(590, 370) rotate(${rotation}, 125, 60)">
+    <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
+    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">🎯 Rank Score</text>
+    
+    <g transform="translate(55, 80)">
+      <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${t.cardBorder}" stroke-width="8"/>
+      <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${rankInfo.color}" stroke-width="8" 
+              stroke-dasharray="${circumference}" 
+              stroke-dashoffset="${strokeDashoffset}"
+              stroke-linecap="round"
+              transform="rotate(-90)"/>
+      <text x="0" y="-5" font-size="20" font-weight="800" fill="${rankInfo.color}" text-anchor="middle">${rankInfo.rank}</text>
+      <text x="0" y="15" font-size="12" fill="${t.textSec}" text-anchor="middle">${rankInfo.score.toLocaleString()}</text>
+    </g>
+    
+    <text x="125" y="75" font-size="11" font-weight="600" fill="${t.text}">${rankInfo.title}</text>
+    <text x="125" y="95" font-size="10" fill="${t.textSec}">Next: ${nextRank}</text>
+    <text x="125" y="110" font-size="9" fill="${t.textSec}">Score to next rank:</text>
+    <text x="125" y="125" font-size="11" font-weight="700" fill="${t.accent}">${nextRankScore.toLocaleString()}</text>
+  </g>`;
+}
+
+function getNextRank(currentRank) {
+  const ranks = Object.keys(RANKS).sort((a, b) => RANKS[a].level - RANKS[b].level);
+  const currentIndex = ranks.indexOf(currentRank);
+  if (currentIndex === -1 || currentIndex === ranks.length - 1) {
+    return 'MAX';
+  }
+  return ranks[currentIndex + 1];
+}
+
+function getNextRankScore(currentRank, currentScore) {
+  const nextRank = getNextRank(currentRank);
+  if (nextRank === 'MAX') return 0;
+  
+  return RANKS[nextRank].level - currentScore;
+}
+
+// ============================================================================
+// SECTION 9: MAIN SVG GENERATOR
+// ============================================================================
+function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = null) {
+  const theme = THEMES[themeName] || THEMES.default;
+  const t = theme;
+  
+  // Extract data
+  const contributions = userData.contributionsCollection;
+  const commits = contributions?.totalCommitContributions ?? 0;
+  const prs = contributions?.totalPullRequestContributions ?? 0;
+  const reviews = contributions?.totalPullRequestReviewContributions ?? 0;
+  const issuesOpened = contributions?.totalIssueContributions ?? 0;
+  const totalIssues = (userData.openIssues?.totalCount ?? 0) + (userData.closedIssues?.totalCount ?? 0);
+  const followers = userData.followers?.totalCount ?? 0;
+  const totalRepos = userData.repositories?.totalCount ?? 0;
+  const totalContributions = contributions?.contributionCalendar?.totalContributions ?? 0;
+  
+  // Calculate score (weighted)
+  const score = Math.floor(
+    commits * 1 +
+    prs * 5 +
+    reviews * 10 +
+    totalIssues * 2 +
+    followers * 0.5
+  );
+  
+  const rankInfo = calculateRank(score);
+  
+  // Calculate streaks
+  const streaks = calculateStreaks(contributions?.contributionCalendar);
+  
+  // Weekend warrior
+  const weekendPercent = calculateWeekendWarrior(streaks.allDays);
+  const weekendBadge = getWeekendBadgeLevel(weekendPercent);
+  
+  // Account age
+  const accountAge = calculateAccountAge(userData.createdAt);
+  
+  // Persona
+  const persona = assignPersona({
+    commits,
+    prs,
+    reviews,
+    issues: totalIssues,
+    stars: userData.repositories?.nodes?.reduce((sum, r) => sum + (r.stargazers?.totalCount ?? 0), 0) ?? 0
+  });
+  
+  // Languages
+  const languageMap = new Map();
+  userData.repositories?.nodes?.forEach(repo => {
+    if (repo.primaryLanguage) {
+      const lang = repo.primaryLanguage.name;
+      const count = languageMap.get(lang) || 0;
+      languageMap.set(lang, count + 1);
+    }
+  });
+  
+  const totalLangRepos = Array.from(languageMap.values()).reduce((sum, count) => sum + count, 0);
+  const languages = Array.from(languageMap.entries())
+    .map(([name, count]) => ({
+      name,
+      count,
+      percentage: (count / totalLangRepos) * 100,
+      color: getLanguageColor(name)
+    }))
+    .sort((a, b) => b.count - a.count);
+  
+  // Repos
+  let repoNodes = userData.repositories?.nodes ?? [];
+  if (customRepos && customRepos.length > 0) {
+    repoNodes = repoNodes.filter(r => customRepos.includes(r.name));
+  }
+  
+  const repos = repoNodes
+    .map(r => ({
+      name: r.name,
+      stars: r.stargazers?.totalCount ?? 0,
+      forks: r.forkCount ?? 0
+    }))
+    .sort((a, b) => b.stars - a.stars);
+  
+  // Generate particles for chaos effect
+  const particles = generateParticles(userData.login, chaos * 10, 900, 500);
+  
+  // Random rotations for chaos (limited)
+  const chaosRotation = Math.min(chaos, 5);
+  const rotations = Array.from({ length: 10 }, () => (Math.random() - 0.5) * chaosRotation);
+  
+  // Build data object
+  const data = {
+    name: userData.name,
+    login: userData.login,
+    persona,
+    rankInfo,
+    streaks,
+    totalContributions,
+    commits,
+    prs,
+    reviews,
+    issues: totalIssues,
+    weekendPercent,
+    weekendBadge,
+    last7Days: streaks.last7Days,
+    languages,
+    repos,
+    followers,
+    totalRepos,
+    accountAge
+  };
+  
+  // Generate SVG defs
+  const defs = `
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${t.bg[0]};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${t.bg[1]};stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${t.gradient1};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${t.gradient2};stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>`;
+  
+  // Generate particles
+  const particlesSVG = particles.map(p => 
+    `<circle cx="${p.x}" cy="${p.y}" r="${p.size}" fill="${t.accent}" opacity="${p.opacity}"/>`
+  ).join('\n    ');
+  
+  // Generate components
+  const components = `
+    ${renderTitle(data, theme)}
+    ${renderIdentity(data, theme, rotations[0])}
+    ${renderStreaks(data, theme, rotations[1])}
+    ${renderWeekend(data, theme, rotations[2])}
+    ${renderStats(data, theme, rotations[3])}
+    ${renderDistribution(data, theme, rotations[4])}
+    ${renderLanguages(data, theme, rotations[5])}
+    ${renderRepos(data, theme, rotations[6])}
+    ${renderSocial(data, theme, rotations[7])}
+    ${renderRank(data, theme, rotations[8])}
+  `;
+  
+  // Build final SVG
+  return `
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+  ${defs}
+  
+  <rect width="900" height="500" fill="url(#bg-gradient)"/>
+  
+  <g opacity="0.5">
+    ${particlesSVG}
+  </g>
+  
+  <style>
+    text {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    }
+  </style>
+  
+  ${components}
+</svg>`.trim();
+}
+
+// ============================================================================
+// SECTION 10: ERROR SVG GENERATOR
+// ============================================================================
+function generateErrorSVG(message, themeName = 'default') {
+  const theme = THEMES[themeName] || THEMES.default;
+  const t = theme;
+  
+  return `
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${t.bg[0]};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${t.bg[1]};stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="900" height="500" fill="url(#bg-gradient)"/>
+  
+  <g transform="translate(450, 250)">
+    <rect x="-200" y="-80" width="400" height="160" rx="16" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="2"/>
+    
+    <text x="0" y="-30" font-size="48" text-anchor="middle" fill="${t.accent}">⚠️</text>
+    <text x="0" y="10" font-size="16" font-weight="700" text-anchor="middle" fill="${t.text}">Error</text>
+    <text x="0" y="40" font-size="13" text-anchor="middle" fill="${t.textSec}">${message}</text>
+  </g>
+</svg>`.trim();
+}
+
+// ============================================================================
+// SECTION 11: MAIN HANDLER
+// ============================================================================
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
