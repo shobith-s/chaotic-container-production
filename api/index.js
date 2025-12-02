@@ -416,7 +416,7 @@ const ICONS = {
 };
 
 // Constants
-const MAX_REPO_NAME_LENGTH = 22;
+const MAX_REPO_NAME_LENGTH = 22; // Fits well in horizontal repo cards with icons and stats
 const SVG_WIDTH = 900;
 const SVG_HEIGHT = 500;
 
