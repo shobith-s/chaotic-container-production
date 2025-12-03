@@ -2,6 +2,29 @@
 // SECTION 1: CONFIGURATION - THEMES
 // ============================================================================
 const THEMES = {
+  nature: {
+    bg: ['#1a1a1a', '#2d2d2d'],
+    container: '#1a1a1a',
+    border: 'rgba(100, 130, 100, 0.3)',
+    card: 'rgba(20, 25, 20, 0.85)',
+    cardBorder: 'rgba(100, 130, 100, 0.3)',
+    text: '#e8f0e8',
+    textSec: '#8a9a8a',
+    accent: '#00ffcc',
+    accent2: '#7fff7f',
+    green: '#7fff7f',
+    yellow: '#00ffcc',
+    gradient1: '#00ffcc',
+    gradient2: '#7fff7f',
+    // Nature-specific colors
+    stoneCrack: '#3a3a3a',
+    rootBrown: '#3d2914',
+    vineGreen: '#2d4a2d',
+    mossGreen: '#1e3d1e',
+    bioCyan: '#00ffcc',
+    bioGreen: '#7fff7f',
+    cardHighlight: 'rgba(0, 255, 200, 0.1)'
+  },
   default: {
     bg: ['#0d1117', '#161b22'],
     container: '#0d1117',
@@ -872,7 +895,279 @@ function getNextRankScore(currentRank, currentScore) {
 }
 
 // ============================================================================
-// SECTION 9: MAIN SVG GENERATOR
+// SECTION 9: NATURE THEME RENDERERS
+// ============================================================================
+function renderNatureBackground(theme, chaos) {
+  const t = theme;
+  
+  return `
+  <!-- Background with stone texture -->
+  <defs>
+    <linearGradient id="stone-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${t.bg[0]};stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#252525;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${t.bg[1]};stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="900" height="500" fill="url(#stone-bg)"/>
+  
+  <!-- Stone crack texture -->
+  <g opacity="0.15">
+    <path d="M0,100 Q200,120 400,90 T900,110" stroke="${t.stoneCrack}" fill="none" stroke-width="1"/>
+    <path d="M0,250 Q150,240 300,255 T900,240" stroke="${t.stoneCrack}" fill="none" stroke-width="1"/>
+    <path d="M0,380 Q250,390 500,375 T900,385" stroke="${t.stoneCrack}" fill="none" stroke-width="1"/>
+    <path d="M100,0 Q120,200 90,400" stroke="${t.stoneCrack}" fill="none" stroke-width="1"/>
+    <path d="M450,0 Q440,150 455,300 T450,500" stroke="${t.stoneCrack}" fill="none" stroke-width="1"/>
+    <path d="M700,0 Q680,200 710,400" stroke="${t.stoneCrack}" fill="none" stroke-width="1"/>
+  </g>`;
+}
+
+function renderNatureElements(theme, chaos, username) {
+  const t = theme;
+  const mossDensity = Math.max(5, chaos * 3);
+  
+  // Generate deterministic moss positions based on username
+  const seed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const random = seededRandom(seed);
+  
+  let mossParticles = '';
+  
+  // Moss clusters at root intersections
+  const mossPositions = [
+    { x: 285, y: 210, count: mossDensity },
+    { x: 565, y: 210, count: mossDensity },
+    { x: 180, y: 350, count: Math.floor(mossDensity * 0.7) },
+    { x: 380, y: 350, count: Math.floor(mossDensity * 0.7) },
+    { x: 650, y: 350, count: Math.floor(mossDensity * 0.7) }
+  ];
+  
+  mossPositions.forEach(pos => {
+    for (let i = 0; i < pos.count; i++) {
+      const offsetX = (random() - 0.5) * 20;
+      const offsetY = (random() - 0.5) * 20;
+      const size = 1 + random() * 1.5;
+      const color = random() > 0.5 ? t.bioCyan : t.bioGreen;
+      const opacity = 0.5 + random() * 0.4;
+      
+      mossParticles += `
+      <circle cx="${pos.x + offsetX}" cy="${pos.y + offsetY}" r="${size}" fill="${color}" opacity="${opacity}" filter="url(#bio-glow)"/>`;
+    }
+  });
+  
+  return `
+  <g id="nature-elements">
+    <!-- Main root system between card rows -->
+    <path d="M0,210 C100,205 150,215 200,210 S300,200 350,210 C400,220 450,200 500,210 S600,220 650,210 C700,200 750,215 800,210 L900,210" 
+          stroke="${t.rootBrown}" stroke-width="4" fill="none" opacity="0.6"/>
+    
+    <path d="M0,215 C120,218 180,212 250,215 S350,220 420,215 C500,210 550,220 620,215 S750,210 850,218 L900,218" 
+          stroke="${t.rootBrown}" stroke-width="3" fill="none" opacity="0.4"/>
+    
+    <!-- Horizontal roots between bottom row cards -->
+    <path d="M0,350 C80,348 140,352 200,350 S300,345 350,350 C400,355 450,345 500,350 S600,355 650,350 C720,347 780,353 850,350 L900,350" 
+          stroke="${t.rootBrown}" stroke-width="3.5" fill="none" opacity="0.5"/>
+    
+    <!-- Vertical vines between cards (left gap) -->
+    <path d="M285,40 Q280,80 285,120 T285,190" 
+          stroke="${t.vineGreen}" stroke-width="2.5" fill="none" opacity="0.5"/>
+    
+    <path d="M288,60 Q295,90 290,130 T287,180" 
+          stroke="${t.vineGreen}" stroke-width="2" fill="none" opacity="0.4"/>
+    
+    <!-- Vertical vines between cards (right gap) -->
+    <path d="M565,40 Q560,80 565,120 T565,190" 
+          stroke="${t.vineGreen}" stroke-width="2.5" fill="none" opacity="0.5"/>
+    
+    <path d="M568,60 Q575,90 570,130 T567,180" 
+          stroke="${t.vineGreen}" stroke-width="2" fill="none" opacity="0.4"/>
+    
+    <!-- Small fern leaves in corners -->
+    <g transform="translate(15, 465)" opacity="0.5">
+      <path d="M0,0 Q5,-8 4,-18 Q8,-14 10,-24 Q6,-16 8,-28" fill="${t.mossGreen}"/>
+      <path d="M8,0 Q13,-9 12,-20 Q16,-15 18,-26" fill="${t.mossGreen}"/>
+    </g>
+    
+    <g transform="translate(870, 465)" opacity="0.5">
+      <path d="M0,0 Q-5,-8 -4,-18 Q-8,-14 -10,-24 Q-6,-16 -8,-28" fill="${t.mossGreen}"/>
+      <path d="M-8,0 Q-13,-9 -12,-20 Q-16,-15 -18,-26" fill="${t.mossGreen}"/>
+    </g>
+    
+    <!-- Bioluminescent moss particles -->
+    <g id="moss-particles">
+      ${mossParticles}
+    </g>
+  </g>`;
+}
+
+function renderNatureFilters() {
+  return `
+  <!-- Bioluminescent glow filter -->
+  <filter id="bio-glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3" result="glow"/>
+    <feMerge>
+      <feMergeNode in="glow"/>
+      <feMergeNode in="glow"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  
+  <!-- Card shadow filter -->
+  <filter id="card-shadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.5"/>
+  </filter>
+  
+  <!-- Data number glow -->
+  <filter id="data-glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="1" result="glow"/>
+    <feMerge>
+      <feMergeNode in="glow"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>`;
+}
+
+function renderNatureGlassCard(x, y, width, height, theme) {
+  const t = theme;
+  
+  return `
+  <g transform="translate(${x}, ${y})" filter="url(#card-shadow)">
+    <rect width="${width}" height="${height}" rx="12" 
+          fill="${t.card}" 
+          stroke="${t.cardBorder}" 
+          stroke-width="1"/>
+  </g>`;
+}
+
+function renderNatureIdentityCard(data, theme) {
+  const { name, login, rankInfo } = data;
+  const t = theme;
+  
+  return `
+  ${renderNatureGlassCard(30, 40, 240, 150, theme)}
+  <g transform="translate(30, 40)">
+    <text x="20" y="30" font-size="13" font-weight="600" fill="${t.textSec}">Identity</text>
+    <text x="20" y="65" font-size="22" font-weight="700" fill="${t.text}">${name || login}</text>
+    <text x="20" y="85" font-size="11" fill="${t.textSec}">@${login}</text>
+    
+    <!-- Rank badge with glow -->
+    <g transform="translate(20, 105)">
+      <rect width="80" height="28" rx="14" fill="${rankInfo.color}" fill-opacity="0.15" stroke="${rankInfo.color}" stroke-width="1.5"/>
+      <text x="40" y="19" font-size="16" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" filter="url(#data-glow)">${rankInfo.rank}</text>
+    </g>
+  </g>`;
+}
+
+function renderNatureContributionsCard(data, theme) {
+  const { commits, prs, reviews, streaks } = data;
+  const t = theme;
+  const currentStreak = streaks.currentStreak ?? 0;
+  
+  return `
+  ${renderNatureGlassCard(290, 40, 280, 150, theme)}
+  <g transform="translate(290, 40)">
+    <text x="20" y="30" font-size="13" font-weight="600" fill="${t.textSec}">Contributions</text>
+    
+    <g transform="translate(20, 50)">
+      <text x="0" y="0" font-size="11" fill="${t.textSec}">Commits</text>
+      <text x="200" y="0" font-size="20" font-weight="700" fill="${t.accent}" text-anchor="end" filter="url(#data-glow)">${commits.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(20, 75)">
+      <text x="0" y="0" font-size="11" fill="${t.textSec}">Pull Requests</text>
+      <text x="200" y="0" font-size="20" font-weight="700" fill="${t.accent}" text-anchor="end" filter="url(#data-glow)">${prs.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(20, 100)">
+      <text x="0" y="0" font-size="11" fill="${t.textSec}">Reviews</text>
+      <text x="200" y="0" font-size="20" font-weight="700" fill="${t.accent}" text-anchor="end" filter="url(#data-glow)">${reviews.toLocaleString()}</text>
+    </g>
+    
+    <g transform="translate(20, 125)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.green}" stroke-width="2">
+        ${ICONS.flame}
+      </svg>
+      <text x="22" y="12" font-size="11" fill="${t.textSec}">Streak:</text>
+      <text x="200" y="12" font-size="16" font-weight="700" fill="${t.green}" text-anchor="end" filter="url(#data-glow)">${currentStreak} days</text>
+    </g>
+  </g>`;
+}
+
+function renderNatureLanguagesCard(data, theme) {
+  const { languages } = data;
+  const t = theme;
+  
+  if (!languages || languages.length === 0) {
+    return '';
+  }
+  
+  const top4 = languages.slice(0, 4);
+  
+  let languageBars = '';
+  top4.forEach((lang, i) => {
+    const y = 50 + (i * 25);
+    const barWidth = (lang.percentage / 100) * 180;
+    
+    languageBars += `
+    <g transform="translate(20, ${y})">
+      <defs>
+        <linearGradient id="lang-grad-${i}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:${t.accent};stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${t.green};stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="180" height="10" rx="5" fill="${t.border}" opacity="0.3"/>
+      <rect width="${barWidth}" height="10" rx="5" fill="url(#lang-grad-${i})"/>
+      <text x="0" y="-4" font-size="11" font-weight="400" fill="${t.textSec}">${lang.name}</text>
+      <text x="180" y="8" font-size="11" font-weight="700" fill="${t.accent}" text-anchor="end">${lang.percentage.toFixed(1)}%</text>
+    </g>`;
+  });
+  
+  return `
+  ${renderNatureGlassCard(30, 220, 240, 150, theme)}
+  <g transform="translate(30, 220)">
+    <text x="20" y="30" font-size="13" font-weight="600" fill="${t.textSec}">Languages</text>
+    ${languageBars}
+  </g>`;
+}
+
+function renderNatureReposCard(data, theme) {
+  const { repos } = data;
+  const t = theme;
+  
+  if (!repos || repos.length === 0) {
+    return '';
+  }
+  
+  const top3 = repos.slice(0, 3);
+  
+  let repoItems = '';
+  top3.forEach((repo, i) => {
+    const y = 50 + (i * 35);
+    
+    repoItems += `
+    <g transform="translate(20, ${y})">
+      <text x="0" y="0" font-size="11" font-weight="600" fill="${t.text}">${repo.name.length > 28 ? repo.name.substring(0, 28) + '...' : repo.name}</text>
+      
+      <g transform="translate(0, 15)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="${t.accent}" stroke="none">
+          ${ICONS.star}
+        </svg>
+        <text x="18" y="9" font-size="16" font-weight="700" fill="${t.accent}" filter="url(#data-glow)">${repo.stars.toLocaleString()}</text>
+      </g>
+    </g>`;
+  });
+  
+  return `
+  ${renderNatureGlassCard(290, 220, 280, 150, theme)}
+  <g transform="translate(290, 220)">
+    <text x="20" y="30" font-size="13" font-weight="600" fill="${t.textSec}">Top Repositories</text>
+    ${repoItems}
+  </g>`;
+}
+
+// ============================================================================
+// SECTION 10: MAIN SVG GENERATOR
 // ============================================================================
 function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = null) {
   const theme = THEMES[themeName] || THEMES.default;
@@ -1027,7 +1322,44 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
     ${renderRank(data, theme, rotations[8])}
   `;
   
-  // Build final SVG
+  // Check if using nature theme
+  if (themeName === 'nature') {
+    // Nature theme SVG
+    const natureDefs = `
+    <defs>
+      ${renderNatureFilters()}
+      <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:${t.accent};stop-opacity:1" />
+        <stop offset="100%" style="stop-color:${t.green};stop-opacity:1" />
+      </linearGradient>
+    </defs>`;
+    
+    const natureComponents = `
+      ${renderNatureIdentityCard(data, theme)}
+      ${renderNatureContributionsCard(data, theme)}
+      ${renderNatureLanguagesCard(data, theme)}
+      ${renderNatureReposCard(data, theme)}
+    `;
+    
+    return `
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+  ${natureDefs}
+  
+  ${renderNatureBackground(theme, chaos)}
+  
+  ${renderNatureElements(theme, chaos, userData.login)}
+  
+  <style>
+    text {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    }
+  </style>
+  
+  ${natureComponents}
+</svg>`.trim();
+  }
+  
+  // Build final SVG (original themes)
   return `
 <svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
   ${defs}
@@ -1049,7 +1381,7 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
 }
 
 // ============================================================================
-// SECTION 10: ERROR SVG GENERATOR
+// SECTION 11: ERROR SVG GENERATOR
 // ============================================================================
 function generateErrorSVG(message, themeName = 'default') {
   const theme = THEMES[themeName] || THEMES.default;
@@ -1077,7 +1409,7 @@ function generateErrorSVG(message, themeName = 'default') {
 }
 
 // ============================================================================
-// SECTION 11: MAIN HANDLER
+// SECTION 12: MAIN HANDLER
 // ============================================================================
 export default async function handler(req, res) {
   // CORS headers
