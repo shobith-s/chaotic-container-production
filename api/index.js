@@ -926,6 +926,7 @@ function renderNatureElements(theme, chaos, username) {
   const mossDensity = Math.max(5, chaos * 3);
   
   // Generate deterministic moss positions based on username
+  // This ensures the same username always produces the same moss pattern across renders
   const seed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const random = seededRandom(seed);
   
@@ -1329,10 +1330,6 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
     const natureDefs = `
     <defs>
       ${renderNatureFilters(theme)}
-      <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${t.accent};stop-opacity:1" />
-        <stop offset="100%" style="stop-color:${t.green};stop-opacity:1" />
-      </linearGradient>
     </defs>`;
     
     const natureComponents = `
