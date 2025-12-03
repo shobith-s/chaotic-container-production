@@ -534,7 +534,7 @@ function renderTitle(data, theme) {
 }
 
 function renderIdentity(data, theme, rotation) {
-  const { name, login, totalContributions, rankInfo } = data;
+  const { name, login, totalContributions } = data;
   const t = theme;
   
   return `
