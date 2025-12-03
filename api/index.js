@@ -758,7 +758,7 @@ function renderLanguages(data, theme, rotation) {
   top5.forEach((lang, i) => {
     const y = 50 + (i * 18);
     const barWidth = (lang.percentage / 100) * 150;
-    const displayName = lang.name.length > maxLangNameLength 
+    const displayName = lang.name.length > maxLangNameLength && maxLangNameLength >= 3
       ? lang.name.substring(0, maxLangNameLength - 3) + '...' 
       : lang.name;
     
@@ -799,7 +799,7 @@ function renderRepos(data, theme, rotation) {
     
     repoItems += `
       <g transform="translate(15, ${y})">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="${t.accent}" stroke="none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="${t.accent}" stroke="${t.accent}" stroke-width="1">
           ${ICONS.repo}
         </svg>
         <text x="22" y="12" font-size="12" font-weight="600" fill="${t.text}">${repo.name}</text>
@@ -835,7 +835,7 @@ function renderSocial(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 80)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.cyan}" stroke="none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.cyan}" stroke="${COLOR_PALETTE.cyan}" stroke-width="1">
         ${ICONS.repo}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Repositories:</text>
