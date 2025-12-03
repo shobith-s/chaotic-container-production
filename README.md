@@ -10,7 +10,9 @@ A self-hostable, serverless API that generates a **Chaotic "Messy Desk" Dashboar
 ## ✨ Features
 
 * **The "Seniority" Score:** A unique algorithm that weights Code Reviews and Discussion Answers higher than simple Commits.
-* **Chaotic Design:** Rotated elements, sticky notes, and stamps—no two elements align perfectly.
+* **Multiple Themes:** Choose from default chaotic design or the new "Nature Reclaiming Technology" theme with organic elements and glassmorphism cards.
+* **Chaotic Design:** Rotated elements, sticky notes, and stamps—no two elements align perfectly (default theme).
+* **Nature Theme:** Wild organic roots, vines, and bioluminescent moss growing between clean, modern data cards.
 * **High Performance:** Serverless (Vercel) + SVG generation (no Puppeteer/Headless browser needed).
 * **Privacy First:** You host it. You use your own Token. No third-party tracking.
 
@@ -45,3 +47,31 @@ Once deployed, Vercel will give you a domain (e.g., `https://my-chaos-stats.verc
 
 ```markdown
 ![My Chaos Stats](https://your-vercel-domain.vercel.app/api?username=YOUR_GITHUB_USERNAME)
+```
+
+## 🎨 Themes
+
+### Nature Theme (New!)
+The "Nature Reclaiming Technology" theme features organic elements growing between clean, modern cards:
+
+```markdown
+![Nature Stats](https://your-vercel-domain.vercel.app/api?username=YOUR_GITHUB_USERNAME&theme=nature)
+```
+
+**Design Features:**
+- Deep charcoal to slate grey gradient background with subtle stone texture
+- Twisted roots and vines growing ONLY in margins between cards
+- Bioluminescent moss particles (electric cyan and soft green) with glow effects
+- Glassmorphism cards with dark green tint and subtle borders
+- High contrast electric cyan data numbers with glow effects
+- Fern accents in corners
+
+**Available Options:**
+- `theme=nature` - Use the nature theme
+- `chaos=1-10` - Controls moss density (default: 3, minimum effective value: 2)
+
+### Other Themes
+Available themes: `default`, `dracula`, `nord`, `tokyonight`, `synthwave`, `monokai`, `github_dark`, `catppuccin`, `nature`
+
+```markdown
+![My Stats](https://your-vercel-domain.vercel.app/api?username=YOUR_GITHUB_USERNAME&theme=dracula)
