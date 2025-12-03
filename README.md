@@ -54,9 +54,7 @@ Once deployed, Vercel will give you a domain (e.g., `https://my-chaos-stats.verc
 ### Nature Theme (New!)
 The "Nature Reclaiming Technology" theme features organic elements growing between clean, modern cards:
 
-```markdown
-![Nature Stats](https://your-vercel-domain.vercel.app/api?username=YOUR_GITHUB_USERNAME&theme=nature)
-```
+![Nature Stats](https://chaotic-container-production.vercel.app/api?username=shobith-s)
 
 **Design Features:**
 - Deep charcoal to slate grey gradient background with subtle stone texture
