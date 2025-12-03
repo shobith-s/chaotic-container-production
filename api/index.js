@@ -35,8 +35,8 @@ const THEMES = {
     accent2: '#1f6feb',
     green: '#3fb950',
     yellow: '#d29922',
-    gradient1: '#58a6ff',
-    gradient2: '#bc8cff'
+    gradient1: '#00ffcc',
+    gradient2: '#7fff7f'
   },
   dracula: {
     bg: ['#282a36', '#21222c'],
@@ -534,7 +534,7 @@ function renderTitle(data, theme) {
 }
 
 function renderIdentity(data, theme, rotation) {
-  const { name, login, persona, rankInfo } = data;
+  const { name, login, totalContributions, rankInfo } = data;
   const t = theme;
   
   return `
@@ -544,11 +544,8 @@ function renderIdentity(data, theme, rotation) {
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">👤 Identity</text>
     <text x="15" y="58" font-size="18" font-weight="800" fill="${t.accent}">${name || login}</text>
     <text x="15" y="78" font-size="12" fill="${t.textSec}">@${login}</text>
-    <text x="15" y="103" font-size="13" font-weight="600" fill="${t.yellow}">✨ ${persona}</text>
-    <g transform="translate(15, 115)">
-      <rect width="60" height="20" rx="10" fill="${rankInfo.color}" fill-opacity="0.2" stroke="${rankInfo.color}" stroke-width="1"/>
-      <text x="30" y="14" font-size="11" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" filter="url(#glow)">${rankInfo.rank}</text>
-    </g>
+    <text x="15" y="103" font-size="13" font-weight="600" fill="${t.accent}">Total Contributions</text>
+    <text x="15" y="123" font-size="20" font-weight="800" fill="${t.green}">${totalContributions.toLocaleString()}</text>
   </g>`;
 }
 
@@ -561,6 +558,7 @@ function renderStreaks(data, theme, rotation) {
   const mostActiveDay = streaks.mostActiveDay ?? { date: '', count: 0 };
   
   const mostActiveDate = mostActiveDay.date ? new Date(mostActiveDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+  const mostActiveDisplay = mostActiveDay.date ? `${mostActiveDate} (${mostActiveDay.count})` : 'N/A';
   
   return `
   <g transform="translate(310, 30) rotate(${rotation}, 125, 60)">
@@ -589,7 +587,7 @@ function renderStreaks(data, theme, rotation) {
         ${ICONS.calendar}
       </svg>
       <text x="28" y="15" font-size="13" fill="${t.textSec}">Most Active:</text>
-      <text x="170" y="15" font-size="14" font-weight="700" fill="${t.green}" text-anchor="end">${mostActiveDate}</text>
+      <text x="170" y="15" font-size="14" font-weight="700" fill="${t.green}" text-anchor="end">${mostActiveDisplay}</text>
     </g>
     
     <text x="15" y="130" font-size="11" fill="${t.textSec}">Total: ${totalContributions.toLocaleString()} contributions</text>
@@ -755,15 +753,20 @@ function renderLanguages(data, theme, rotation) {
   const top5 = languages.slice(0, 5);
   
   let languageItems = '';
+  const maxLangNameLength = 12;
+  
   top5.forEach((lang, i) => {
     const y = 50 + (i * 18);
     const barWidth = (lang.percentage / 100) * 150;
+    const displayName = lang.name.length > maxLangNameLength 
+      ? lang.name.substring(0, maxLangNameLength) + '...' 
+      : lang.name;
     
     languageItems += `
       <g transform="translate(15, ${y})">
         <rect width="150" height="12" rx="6" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1"/>
         <rect width="${barWidth}" height="12" rx="6" fill="${lang.color || t.accent}" fill-opacity="0.8"/>
-        <text x="158" y="9" font-size="10" fill="${t.textSec}">${lang.name}</text>
+        <text x="158" y="9" font-size="10" fill="${t.textSec}">${displayName}</text>
         <text x="235" y="9" font-size="10" font-weight="600" fill="${t.text}" text-anchor="end">${lang.percentage.toFixed(1)}%</text>
       </g>`;
   });
