@@ -158,19 +158,15 @@ const COLOR_PALETTE = {
 };
 
 const RANKS = {
-  'S+': { level: 10000, title: 'Legendary Contributor', color: '#ff6b6b' },
-  'S': { level: 5000, title: 'Elite Developer', color: '#ee5a6f' },
-  'S-': { level: 2500, title: 'Master Coder', color: '#f06595' },
-  'A++': { level: 1500, title: 'Senior Expert', color: '#cc5de8' },
-  'A+': { level: 1000, title: 'Expert Developer', color: '#845ef7' },
-  'A': { level: 750, title: 'Advanced Developer', color: '#5f3dc4' },
-  'A-': { level: 500, title: 'Skilled Developer', color: '#7950f2' },
-  'B+': { level: 300, title: 'Intermediate Developer', color: '#4c6ef5' },
-  'B': { level: 200, title: 'Regular Contributor', color: '#4dabf7' },
-  'B-': { level: 100, title: 'Active Developer', color: '#3bc9db' },
-  'C+': { level: 50, title: 'Growing Developer', color: '#22b8cf' },
-  'C': { level: 25, title: 'New Contributor', color: '#15aabf' },
-  'C-': { level: 0, title: 'Beginner', color: '#1098ad' }
+  'S': { title: 'Top 1%', color: '#ff6b6b' },
+  'A+': { title: 'Top 12.5%', color: '#f06595' },
+  'A': { title: 'Top 25%', color: '#cc5de8' },
+  'A-': { title: 'Top 37.5%', color: '#845ef7' },
+  'B+': { title: 'Top 50%', color: '#7950f2' },
+  'B': { title: 'Top 62.5%', color: '#4c6ef5' },
+  'B-': { title: 'Top 75%', color: '#4dabf7' },
+  'C+': { title: 'Top 87.5%', color: '#3bc9db' },
+  'C': { title: 'Everyone', color: '#22b8cf' }
 };
 
 // ============================================================================
@@ -311,27 +307,55 @@ function getLanguageColor(language) {
 // ============================================================================
 // SECTION 6: CALCULATION FUNCTIONS
 // ============================================================================
-function calculateRank(score) {
-  const ranks = Object.entries(RANKS).sort((a, b) => b[1].level - a[1].level);
+
+// Exponential CDF for rank calculation
+function exponential_cdf(x) {
+  return 1 - 2 ** -x;
+}
+
+// Log-normal CDF approximation for rank calculation
+function log_normal_cdf(x) {
+  return x / (1 + x);
+}
+
+// Calculate rank using Anurag Hazra's statistical algorithm
+function calculateRank({ all_commits, commits, prs, issues, reviews, stars, followers }) {
+  const COMMITS_MEDIAN = all_commits ? 1000 : 250;
+  const COMMITS_WEIGHT = 2;
+  const PRS_MEDIAN = 50;
+  const PRS_WEIGHT = 3;
+  const ISSUES_MEDIAN = 25;
+  const ISSUES_WEIGHT = 1;
+  const REVIEWS_MEDIAN = 2;
+  const REVIEWS_WEIGHT = 1;
+  const STARS_MEDIAN = 50;
+  const STARS_WEIGHT = 4;
+  const FOLLOWERS_MEDIAN = 10;
+  const FOLLOWERS_WEIGHT = 1;
+
+  const TOTAL_WEIGHT = COMMITS_WEIGHT + PRS_WEIGHT + ISSUES_WEIGHT + REVIEWS_WEIGHT + STARS_WEIGHT + FOLLOWERS_WEIGHT;
+
+  const THRESHOLDS = [1, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100];
+  const LEVELS = ["S", "A+", "A", "A-", "B+", "B", "B-", "C+", "C"];
+
+  const rank = 1 - (
+    COMMITS_WEIGHT * exponential_cdf(commits / COMMITS_MEDIAN) +
+    PRS_WEIGHT * exponential_cdf(prs / PRS_MEDIAN) +
+    ISSUES_WEIGHT * exponential_cdf(issues / ISSUES_MEDIAN) +
+    REVIEWS_WEIGHT * exponential_cdf(reviews / REVIEWS_MEDIAN) +
+    STARS_WEIGHT * log_normal_cdf(stars / STARS_MEDIAN) +
+    FOLLOWERS_WEIGHT * log_normal_cdf(followers / FOLLOWERS_MEDIAN)
+  ) / TOTAL_WEIGHT;
+
+  const level = LEVELS[THRESHOLDS.findIndex((t) => rank * 100 <= t)];
+  const percentile = rank * 100;
   
-  for (const [rank, data] of ranks) {
-    if (score >= data.level) {
-      return {
-        rank,
-        title: data.title,
-        color: data.color,
-        level: data.level,
-        score
-      };
-    }
-  }
-  
-  return {
-    rank: 'C-',
-    title: RANKS['C-'].title,
-    color: RANKS['C-'].color,
-    level: 0,
-    score
+  return { 
+    level, 
+    percentile,
+    rank: level,  // For backward compatibility
+    title: RANKS[level]?.title || 'Everyone',
+    color: RANKS[level]?.color || '#22b8cf'
   };
 }
 
@@ -845,12 +869,9 @@ function renderRank(data, theme, rotation) {
   
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
-  const maxScore = 10000;
-  const percentage = Math.min((rankInfo.score / maxScore) * 100, 100);
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-  
-  const nextRank = getNextRank(rankInfo.rank);
-  const nextRankScore = getNextRankScore(rankInfo.rank, rankInfo.score);
+  // Progress ring shows 100 - percentile (so S rank with percentile ~1 shows nearly full circle at ~99%)
+  const progressPercentage = 100 - rankInfo.percentile;
+  const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
   
   return `
   <g transform="translate(590, 370) rotate(${rotation}, 125, 60)">
@@ -865,31 +886,14 @@ function renderRank(data, theme, rotation) {
               stroke-dashoffset="${strokeDashoffset}"
               stroke-linecap="round"
               transform="rotate(-90)"/>
-      <text x="0" y="-5" font-size="20" font-weight="800" fill="${rankInfo.color}" text-anchor="middle">${rankInfo.rank}</text>
-      <text x="0" y="15" font-size="12" fill="${t.textSec}" text-anchor="middle">${rankInfo.score.toLocaleString()}</text>
+      <text x="0" y="0" font-size="24" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
+      <text x="0" y="20" font-size="11" fill="${t.textSec}" text-anchor="middle">${rankInfo.percentile.toFixed(1)}%</text>
     </g>
     
-    <text x="125" y="75" font-size="11" font-weight="600" fill="${t.text}">${rankInfo.title}</text>
-    <text x="125" y="95" font-size="10" fill="${t.textSec}">Next: ${nextRank}</text>
-    <text x="125" y="110" font-size="9" fill="${t.textSec}">Score to next rank:</text>
-    <text x="125" y="125" font-size="11" font-weight="700" fill="${t.accent}">${nextRankScore.toLocaleString()}</text>
+    <text x="125" y="70" font-size="11" font-weight="600" fill="${t.text}">${rankInfo.title}</text>
+    <text x="125" y="95" font-size="10" fill="${t.textSec}">Percentile Rank</text>
+    <text x="125" y="115" font-size="9" fill="${t.textSec}">Based on GitHub stats</text>
   </g>`;
-}
-
-function getNextRank(currentRank) {
-  const ranks = Object.keys(RANKS).sort((a, b) => RANKS[a].level - RANKS[b].level);
-  const currentIndex = ranks.indexOf(currentRank);
-  if (currentIndex === -1 || currentIndex === ranks.length - 1) {
-    return 'MAX';
-  }
-  return ranks[currentIndex + 1];
-}
-
-function getNextRankScore(currentRank, currentScore) {
-  const nextRank = getNextRank(currentRank);
-  if (nextRank === 'MAX') return 0;
-  
-  return RANKS[nextRank].level - currentScore;
 }
 
 // ============================================================================
@@ -1171,31 +1175,34 @@ function renderNatureReposCard(data, theme) {
 // ============================================================================
 // SECTION 10: MAIN SVG GENERATOR
 // ============================================================================
-function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = null) {
+function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = null, includeAllCommits = false) {
   const theme = THEMES[themeName] || THEMES.default;
   const t = theme;
   
   // Extract data
   const contributions = userData.contributionsCollection;
   const commits = contributions?.totalCommitContributions ?? 0;
-  const prs = contributions?.totalPullRequestContributions ?? 0;
+  const prs = includeAllCommits ? (userData.pullRequests?.totalCount ?? 0) : (contributions?.totalPullRequestContributions ?? 0);
   const reviews = contributions?.totalPullRequestReviewContributions ?? 0;
   const issuesOpened = contributions?.totalIssueContributions ?? 0;
-  const totalIssues = (userData.openIssues?.totalCount ?? 0) + (userData.closedIssues?.totalCount ?? 0);
+  const totalIssues = includeAllCommits ? ((userData.openIssues?.totalCount ?? 0) + (userData.closedIssues?.totalCount ?? 0)) : issuesOpened;
   const followers = userData.followers?.totalCount ?? 0;
   const totalRepos = userData.repositories?.totalCount ?? 0;
   const totalContributions = contributions?.contributionCalendar?.totalContributions ?? 0;
   
-  // Calculate score (weighted)
-  const score = Math.floor(
-    commits * 1 +
-    prs * 5 +
-    reviews * 10 +
-    totalIssues * 2 +
-    followers * 0.5
-  );
+  // Calculate total stars across all repositories
+  const totalStars = userData.repositories?.nodes?.reduce((sum, r) => sum + (r.stargazers?.totalCount ?? 0), 0) ?? 0;
   
-  const rankInfo = calculateRank(score);
+  // Calculate rank using the new algorithm
+  const rankInfo = calculateRank({
+    all_commits: includeAllCommits,
+    commits: commits,
+    prs: prs,
+    issues: totalIssues,
+    reviews: reviews,
+    stars: totalStars,
+    followers: followers
+  });
   
   // Calculate streaks
   const streaks = calculateStreaks(contributions?.contributionCalendar);
@@ -1213,7 +1220,7 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
     prs,
     reviews,
     issues: totalIssues,
-    stars: userData.repositories?.nodes?.reduce((sum, r) => sum + (r.stargazers?.totalCount ?? 0), 0) ?? 0
+    stars: totalStars
   });
   
   // Languages
@@ -1425,6 +1432,7 @@ export default async function handler(req, res) {
   const chaos = parseInt(url.searchParams.get('chaos') || '3', 10);
   const reposParam = url.searchParams.get('repos');
   const customRepos = reposParam ? reposParam.split(',').map(r => r.trim()) : null;
+  const includeAllCommits = url.searchParams.get('include_all_commits') === 'true';
 
   // Validate
   if (!username) {
@@ -1440,7 +1448,7 @@ export default async function handler(req, res) {
 
   try {
     const userData = await fetchGitHubData(username, token);
-    const svg = generateSVG(userData, theme, chaos, customRepos);
+    const svg = generateSVG(userData, theme, chaos, customRepos, includeAllCommits);
     
     res.setHeader('Content-Type', 'image/svg+xml');
     res.setHeader('Cache-Control', 'public, max-age=14400, s-maxage=14400');
