@@ -68,7 +68,7 @@ The "Nature Reclaiming Technology" theme features organic elements growing betwe
 
 **Available Options:**
 - `theme=nature` - Use the nature theme
-- `chaos=1-10` - Controls moss density (default: 3, recommended: 5 for nature theme)
+- `chaos=1-10` - Controls moss density (default: 3, minimum effective value: 2)
 
 ### Other Themes
 Available themes: `default`, `dracula`, `nord`, `tokyonight`, `synthwave`, `monokai`, `github_dark`, `catppuccin`, `nature`

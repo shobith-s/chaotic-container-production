@@ -13,7 +13,7 @@ const THEMES = {
     accent: '#00ffcc',
     accent2: '#7fff7f',
     green: '#7fff7f',
-    yellow: '#00ffcc',
+    yellow: '#d29922',
     gradient1: '#00ffcc',
     gradient2: '#7fff7f',
     // Nature-specific colors
@@ -21,8 +21,6 @@ const THEMES = {
     rootBrown: '#3d2914',
     vineGreen: '#2d4a2d',
     mossGreen: '#1e3d1e',
-    bioCyan: '#00ffcc',
-    bioGreen: '#7fff7f',
     cardHighlight: 'rgba(0, 255, 200, 0.1)'
   },
   default: {
@@ -947,7 +945,7 @@ function renderNatureElements(theme, chaos, username) {
       const offsetX = (random() - 0.5) * 20;
       const offsetY = (random() - 0.5) * 20;
       const size = 1 + random() * 1.5;
-      const color = random() > 0.5 ? t.bioCyan : t.bioGreen;
+      const color = random() > 0.5 ? t.accent : t.green;
       const opacity = 0.5 + random() * 0.4;
       
       mossParticles += `
@@ -1000,7 +998,9 @@ function renderNatureElements(theme, chaos, username) {
   </g>`;
 }
 
-function renderNatureFilters() {
+function renderNatureFilters(theme) {
+  const t = theme;
+  
   return `
   <!-- Bioluminescent glow filter -->
   <filter id="bio-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -1024,7 +1024,13 @@ function renderNatureFilters() {
       <feMergeNode in="glow"/>
       <feMergeNode in="SourceGraphic"/>
     </feMerge>
-  </filter>`;
+  </filter>
+  
+  <!-- Language progress bar gradient -->
+  <linearGradient id="lang-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" style="stop-color:${t.accent};stop-opacity:1" />
+    <stop offset="100%" style="stop-color:${t.green};stop-opacity:1" />
+  </linearGradient>`;
 }
 
 function renderNatureGlassCard(x, y, width, height, theme) {
@@ -1058,6 +1064,14 @@ function renderNatureIdentityCard(data, theme) {
   </g>`;
 }
 
+function renderNatureStatRow(label, value, y, color, fontSize = 20) {
+  return `
+    <g transform="translate(20, ${y})">
+      <text x="0" y="0" font-size="11" fill="${color.label}">${label}</text>
+      <text x="200" y="0" font-size="${fontSize}" font-weight="700" fill="${color.value}" text-anchor="end" filter="url(#data-glow)">${value}</text>
+    </g>`;
+}
+
 function renderNatureContributionsCard(data, theme) {
   const { commits, prs, reviews, streaks } = data;
   const t = theme;
@@ -1068,20 +1082,9 @@ function renderNatureContributionsCard(data, theme) {
   <g transform="translate(290, 40)">
     <text x="20" y="30" font-size="13" font-weight="600" fill="${t.textSec}">Contributions</text>
     
-    <g transform="translate(20, 50)">
-      <text x="0" y="0" font-size="11" fill="${t.textSec}">Commits</text>
-      <text x="200" y="0" font-size="20" font-weight="700" fill="${t.accent}" text-anchor="end" filter="url(#data-glow)">${commits.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(20, 75)">
-      <text x="0" y="0" font-size="11" fill="${t.textSec}">Pull Requests</text>
-      <text x="200" y="0" font-size="20" font-weight="700" fill="${t.accent}" text-anchor="end" filter="url(#data-glow)">${prs.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(20, 100)">
-      <text x="0" y="0" font-size="11" fill="${t.textSec}">Reviews</text>
-      <text x="200" y="0" font-size="20" font-weight="700" fill="${t.accent}" text-anchor="end" filter="url(#data-glow)">${reviews.toLocaleString()}</text>
-    </g>
+    ${renderNatureStatRow('Commits', commits.toLocaleString(), 50, { label: t.textSec, value: t.accent })}
+    ${renderNatureStatRow('Pull Requests', prs.toLocaleString(), 75, { label: t.textSec, value: t.accent })}
+    ${renderNatureStatRow('Reviews', reviews.toLocaleString(), 100, { label: t.textSec, value: t.accent })}
     
     <g transform="translate(20, 125)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.green}" stroke-width="2">
@@ -1110,14 +1113,8 @@ function renderNatureLanguagesCard(data, theme) {
     
     languageBars += `
     <g transform="translate(20, ${y})">
-      <defs>
-        <linearGradient id="lang-grad-${i}" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color:${t.accent};stop-opacity:1" />
-          <stop offset="100%" style="stop-color:${t.green};stop-opacity:1" />
-        </linearGradient>
-      </defs>
       <rect width="180" height="10" rx="5" fill="${t.border}" opacity="0.3"/>
-      <rect width="${barWidth}" height="10" rx="5" fill="url(#lang-grad-${i})"/>
+      <rect width="${barWidth}" height="10" rx="5" fill="url(#lang-gradient)"/>
       <text x="0" y="-4" font-size="11" font-weight="400" fill="${t.textSec}">${lang.name}</text>
       <text x="180" y="8" font-size="11" font-weight="700" fill="${t.accent}" text-anchor="end">${lang.percentage.toFixed(1)}%</text>
     </g>`;
@@ -1140,14 +1137,18 @@ function renderNatureReposCard(data, theme) {
   }
   
   const top3 = repos.slice(0, 3);
+  const MAX_REPO_NAME_LENGTH = 28;
   
   let repoItems = '';
   top3.forEach((repo, i) => {
     const y = 50 + (i * 35);
+    const repoName = repo.name.length > MAX_REPO_NAME_LENGTH 
+      ? repo.name.substring(0, MAX_REPO_NAME_LENGTH) + '...' 
+      : repo.name;
     
     repoItems += `
     <g transform="translate(20, ${y})">
-      <text x="0" y="0" font-size="11" font-weight="600" fill="${t.text}">${repo.name.length > 28 ? repo.name.substring(0, 28) + '...' : repo.name}</text>
+      <text x="0" y="0" font-size="11" font-weight="600" fill="${t.text}">${repoName}</text>
       
       <g transform="translate(0, 15)">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="${t.accent}" stroke="none">
@@ -1327,7 +1328,7 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
     // Nature theme SVG
     const natureDefs = `
     <defs>
-      ${renderNatureFilters()}
+      ${renderNatureFilters(theme)}
       <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" style="stop-color:${t.accent};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${t.green};stop-opacity:1" />
