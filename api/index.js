@@ -14,8 +14,8 @@ const THEMES = {
     accent2: '#7fff7f',
     green: '#7fff7f',
     yellow: '#d29922',
-    gradient1: '#00ffcc',
-    gradient2: '#7fff7f',
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff',
     // Nature-specific colors
     stoneCrack: '#3a3a3a',
     rootBrown: '#3d2914',
@@ -35,8 +35,8 @@ const THEMES = {
     accent2: '#1f6feb',
     green: '#3fb950',
     yellow: '#d29922',
-    gradient1: '#00ffcc',
-    gradient2: '#7fff7f'
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff'
   },
   dracula: {
     bg: ['#282a36', '#21222c'],
@@ -51,7 +51,7 @@ const THEMES = {
     green: '#50fa7b',
     yellow: '#f1fa8c',
     gradient1: '#ff79c6',
-    gradient2: '#bd93f9'
+    gradient2: '#bc8cff'
   },
   nord: {
     bg: ['#2e3440', '#3b4252'],
@@ -65,8 +65,8 @@ const THEMES = {
     accent2: '#81a1c1',
     green: '#a3be8c',
     yellow: '#ebcb8b',
-    gradient1: '#88c0d0',
-    gradient2: '#5e81ac'
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff'
   },
   tokyonight: {
     bg: ['#1a1b26', '#16161e'],
@@ -80,8 +80,8 @@ const THEMES = {
     accent2: '#bb9af7',
     green: '#9ece6a',
     yellow: '#e0af68',
-    gradient1: '#7aa2f7',
-    gradient2: '#bb9af7'
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff'
   },
   synthwave: {
     bg: ['#2b213a', '#241b2f'],
@@ -95,8 +95,8 @@ const THEMES = {
     accent2: '#fe4450',
     green: '#72f1b8',
     yellow: '#fede5d',
-    gradient1: '#f92aad',
-    gradient2: '#fe4450'
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff'
   },
   monokai: {
     bg: ['#272822', '#1e1f1c'],
@@ -110,8 +110,8 @@ const THEMES = {
     accent2: '#ae81ff',
     green: '#a6e22e',
     yellow: '#f4bf75',
-    gradient1: '#66d9ef',
-    gradient2: '#ae81ff'
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff'
   },
   github_dark: {
     bg: ['#0d1117', '#010409'],
@@ -140,8 +140,8 @@ const THEMES = {
     accent2: '#cba6f7',
     green: '#a6e3a1',
     yellow: '#f9e2af',
-    gradient1: '#89b4fa',
-    gradient2: '#cba6f7'
+    gradient1: '#ff79c6',
+    gradient2: '#bc8cff'
   }
 };
 
@@ -538,14 +538,13 @@ function renderIdentity(data, theme, rotation) {
   const t = theme;
   
   return `
-  <g transform="translate(30, 30) rotate(${rotation}, 125, 60)">
+  <g transform="translate(30, 30) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
-    <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">👤 Identity</text>
-    <text x="15" y="58" font-size="18" font-weight="800" fill="${t.accent}">${name || login}</text>
-    <text x="15" y="78" font-size="12" fill="${t.textSec}">@${login}</text>
-    <text x="15" y="103" font-size="13" font-weight="600" fill="${t.accent}">Total Contributions</text>
-    <text x="15" y="123" font-size="20" font-weight="800" fill="${t.green}">${totalContributions.toLocaleString()}</text>
+    <text x="15" y="30" font-size="14" font-weight="600" fill="${t.textSec}">Identity</text>
+    <text x="15" y="60" font-size="20" font-weight="700" fill="${t.accent}">${name || login}</text>
+    <text x="15" y="80" font-size="12" fill="${t.textSec}">@${login}</text>
+    <text x="15" y="110" font-size="12" fill="${t.textSec}">Total: ${totalContributions.toLocaleString()} contributions</text>
   </g>`;
 }
 
@@ -561,21 +560,21 @@ function renderStreaks(data, theme, rotation) {
   const mostActiveDisplay = mostActiveDay.date ? `${mostActiveDate} (${mostActiveDay.count})` : 'N/A';
   
   return `
-  <g transform="translate(310, 30) rotate(${rotation}, 125, 60)">
+  <g transform="translate(310, 30) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">🔥 Streaks &amp; Activity</text>
     
     <g transform="translate(15, 50)">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff8c42" stroke="#ff8c42" stroke-width="2">
         ${ICONS.flame}
       </svg>
       <text x="28" y="15" font-size="13" fill="${t.textSec}">Current:</text>
-      <text x="170" y="15" font-size="14" font-weight="700" fill="${t.accent}" text-anchor="end">${currentStreak} days</text>
+      <text x="170" y="15" font-size="14" font-weight="700" fill="#ff8c42" text-anchor="end">${currentStreak} days</text>
     </g>
     
     <g transform="translate(15, 75)">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${t.yellow}" stroke-width="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="${t.yellow}" stroke="${t.yellow}" stroke-width="2">
         ${ICONS.trophy}
       </svg>
       <text x="28" y="15" font-size="13" fill="${t.textSec}">Longest:</text>
@@ -583,7 +582,7 @@ function renderStreaks(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 100)">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${t.green}" stroke-width="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="${t.green}" stroke="${t.green}" stroke-width="2">
         ${ICONS.calendar}
       </svg>
       <text x="28" y="15" font-size="13" fill="${t.textSec}">Most Active:</text>
@@ -603,21 +602,22 @@ function renderWeekend(data, theme, rotation) {
   }
   
   return `
-  <g transform="translate(590, 30) rotate(${rotation}, 125, 60)">
+  <g transform="translate(590, 30) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">🏆 Weekend Warrior</text>
     
-    <g transform="translate(90, 50)">
-      <circle cx="0" cy="0" r="35" fill="${weekendBadge.color}" fill-opacity="0.2" stroke="${weekendBadge.color}" stroke-width="2"/>
+    <g transform="translate(15, 70)">
+      <text x="0" y="0" font-size="16" font-weight="700" fill="${t.text}">${weekendBadge.level} Badge</text>
+      <text x="0" y="22" font-size="18" font-weight="800" fill="${weekendBadge.color}">${weekendPercent}%</text>
+    </g>
+    
+    <g transform="translate(190, 70)">
+      <circle cx="0" cy="0" r="30" fill="${weekendBadge.color}" fill-opacity="0.2" stroke="${weekendBadge.color}" stroke-width="2"/>
       <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${weekendBadge.color}" stroke-width="2">
         ${ICONS.award}
       </svg>
     </g>
-    
-    <text x="125" y="95" font-size="18" font-weight="800" fill="${weekendBadge.color}" text-anchor="middle">${weekendPercent}%</text>
-    <text x="125" y="112" font-size="12" fill="${t.textSec}" text-anchor="middle">${weekendBadge.level} Badge</text>
-    <text x="125" y="130" font-size="10" fill="${t.textSec}" text-anchor="middle">Weekend Contributions</text>
   </g>`;
 }
 
@@ -626,13 +626,13 @@ function renderStats(data, theme, rotation) {
   const t = theme;
   
   return `
-  <g transform="translate(30, 200) rotate(${rotation}, 125, 60)">
+  <g transform="translate(30, 200) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">📊 Core Stats</text>
     
     <g transform="translate(15, 50)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.success}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.success}" stroke="${COLOR_PALETTE.success}" stroke-width="2">
         ${ICONS.commit}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Commits:</text>
@@ -640,7 +640,7 @@ function renderStats(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 73)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.primary}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.primary}" stroke="${COLOR_PALETTE.primary}" stroke-width="2">
         ${ICONS.pr}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Pull Requests:</text>
@@ -648,7 +648,7 @@ function renderStats(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 96)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.warning}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.warning}" stroke="${COLOR_PALETTE.warning}" stroke-width="2">
         ${ICONS.eye}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Reviews:</text>
@@ -656,7 +656,7 @@ function renderStats(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 119)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.danger}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.danger}" stroke="${COLOR_PALETTE.danger}" stroke-width="2">
         ${ICONS.issue}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Issues:</text>
@@ -727,7 +727,7 @@ function renderDistribution(data, theme, rotation) {
   });
   
   return `
-  <g transform="translate(310, 200) rotate(${rotation}, 125, 60)">
+  <g transform="translate(310, 200) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">📈 Last 7 Days</text>
@@ -753,13 +753,13 @@ function renderLanguages(data, theme, rotation) {
   const top5 = languages.slice(0, 5);
   
   let languageItems = '';
-  const maxLangNameLength = 12;
+  const maxLangNameLength = 15;
   
   top5.forEach((lang, i) => {
     const y = 50 + (i * 18);
     const barWidth = (lang.percentage / 100) * 150;
-    const displayName = lang.name.length > maxLangNameLength 
-      ? lang.name.substring(0, maxLangNameLength) + '...' 
+    const displayName = lang.name.length > maxLangNameLength && maxLangNameLength >= 3
+      ? lang.name.substring(0, maxLangNameLength - 3) + '...' 
       : lang.name;
     
     languageItems += `
@@ -772,7 +772,7 @@ function renderLanguages(data, theme, rotation) {
   });
   
   return `
-  <g transform="translate(590, 200) rotate(${rotation}, 125, 60)">
+  <g transform="translate(590, 200) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">
@@ -799,27 +799,15 @@ function renderRepos(data, theme, rotation) {
     
     repoItems += `
       <g transform="translate(15, ${y})">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="${t.accent}" stroke="${t.accent}" stroke-width="1">
           ${ICONS.repo}
         </svg>
         <text x="22" y="12" font-size="12" font-weight="600" fill="${t.text}">${repo.name}</text>
-        
-        <g transform="translate(0, 16)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.warning}" stroke-width="2">
-            ${ICONS.star}
-          </svg>
-          <text x="16" y="9" font-size="10" fill="${t.textSec}">${repo.stars.toLocaleString()}</text>
-          
-          <svg x="65" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.purple}" stroke-width="2">
-            ${ICONS.fork}
-          </svg>
-          <text x="81" y="9" font-size="10" fill="${t.textSec}">${repo.forks.toLocaleString()}</text>
-        </g>
       </g>`;
   });
   
   return `
-  <g transform="translate(30, 370) rotate(${rotation}, 125, 60)">
+  <g transform="translate(30, 370) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">⭐ Top Repositories</text>
@@ -833,13 +821,13 @@ function renderSocial(data, theme, rotation) {
   const t = theme;
   
   return `
-  <g transform="translate(310, 370) rotate(${rotation}, 125, 60)">
+  <g transform="translate(310, 370) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">👥 Social &amp; Account</text>
     
     <g transform="translate(15, 55)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.purple}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.purple}" stroke="${COLOR_PALETTE.purple}" stroke-width="2">
         ${ICONS.users}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Followers:</text>
@@ -847,7 +835,7 @@ function renderSocial(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 80)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${COLOR_PALETTE.cyan}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.cyan}" stroke="${COLOR_PALETTE.cyan}" stroke-width="1">
         ${ICONS.repo}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Repositories:</text>
@@ -855,7 +843,7 @@ function renderSocial(data, theme, rotation) {
     </g>
     
     <g transform="translate(15, 105)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="${t.accent}" stroke="${t.accent}" stroke-width="2">
         ${ICONS.calendar}
       </svg>
       <text x="25" y="13" font-size="12" fill="${t.textSec}">Account Age:</text>
@@ -877,25 +865,20 @@ function renderRank(data, theme, rotation) {
   const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
   
   return `
-  <g transform="translate(590, 370) rotate(${rotation}, 125, 60)">
+  <g transform="translate(590, 370) rotate(0, 125, 60)">
     <rect width="250" height="140" rx="12" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1.5" filter="url(#shadow)"/>
     <rect width="250" height="3" rx="1.5" fill="url(#accent-gradient)"/>
     <text x="15" y="30" font-size="14" font-weight="700" fill="${t.text}">🎯 Rank Score</text>
     
-    <g transform="translate(55, 80)">
+    <g transform="translate(125, 85)">
       <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${t.cardBorder}" stroke-width="8"/>
       <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${rankInfo.color}" stroke-width="8" 
               stroke-dasharray="${circumference}" 
               stroke-dashoffset="${strokeDashoffset}"
               stroke-linecap="round"
               transform="rotate(-90)"/>
-      <text x="0" y="0" font-size="24" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
-      <text x="0" y="20" font-size="11" fill="${t.textSec}" text-anchor="middle">${rankInfo.percentile.toFixed(1)}%</text>
+      <text x="0" y="0" font-size="28" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
     </g>
-    
-    <text x="125" y="70" font-size="11" font-weight="600" fill="${t.text}">${rankInfo.title}</text>
-    <text x="125" y="95" font-size="10" fill="${t.textSec}">Percentile Rank</text>
-    <text x="125" y="115" font-size="9" fill="${t.textSec}">Based on GitHub stats</text>
   </g>`;
 }
 
