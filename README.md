@@ -1,20 +1,17 @@
 # 🌪️ GitHub Entropy Stats
 
-> **"Stop using boring grid tables. Embrace the chaos."**
+> A beautiful, self-hostable GitHub stats card with multiple themes
 
-A self-hostable, serverless API that generates a **Chaotic "Messy Desk" Dashboard** for your GitHub profile. Unlike standard stat cards, this visualizes your "Seniority" and "Impact" using a dynamic, sticker-bombed aesthetic.
-
-![Entropy Stats Preview](https://via.placeholder.com/800x400.png?text=Preview+of+Chaotic+Stats+Card)
-*(Replace this link with a screenshot of your actual generated SVG once deployed)*
+![Entropy Stats Preview](https://chaotic-container-production.vercel.app/api?username=shobith-s)
 
 ## ✨ Features
 
-* **The "Seniority" Score:** A unique algorithm that weights Code Reviews and Discussion Answers higher than simple Commits.
-* **Multiple Themes:** Choose from default chaotic design or the new "Nature Reclaiming Technology" theme with organic elements and glassmorphism cards.
-* **Chaotic Design:** Rotated elements, sticky notes, and stamps—no two elements align perfectly (default theme).
-* **Nature Theme:** Wild organic roots, vines, and bioluminescent moss growing between clean, modern data cards.
-* **High Performance:** Serverless (Vercel) + SVG generation (no Puppeteer/Headless browser needed).
-* **Privacy First:** You host it. You use your own Token. No third-party tracking.
+* **Clean 3x3 Grid Layout:** 9 stat cards displaying identity, streaks, weekend warrior, core stats, last 7 days, top languages, top repositories, social stats, and rank score
+* **Statistical Ranking System:** Uses Anurag Hazra's github-readme-stats algorithm with exponential and log-normal CDFs for accurate percentile-based ranking
+* **9 Beautiful Themes:** Choose from default, dracula, nord, tokyonight, synthwave, monokai, github_dark, catppuccin, and nature themes
+* **Comprehensive Stats:** Commits, PRs, reviews, issues, streaks, languages, repositories, and more
+* **High Performance:** Serverless (Vercel) + SVG generation (no Puppeteer/Headless browser needed)
+* **Privacy First:** You host it. You use your own Token. No third-party tracking
 
 ---
 
@@ -49,27 +46,138 @@ Once deployed, Vercel will give you a domain (e.g., `https://my-chaos-stats.verc
 ![My Chaos Stats](https://your-vercel-domain.vercel.app/api?username=YOUR_GITHUB_USERNAME)
 ```
 
-## 🎨 Themes
+## 📊 Parameters
 
-### Nature Theme (New!)
-The "Nature Reclaiming Technology" theme features organic elements growing between clean, modern cards:
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `username` | GitHub username (required) | - |
+| `theme` | Theme name | `default` |
+| `include_all_commits` | Count all-time commits (adjusts median to 1000) | `false` |
+| `repos` | Custom repos to highlight (comma-separated) | - |
 
-![Nature Stats](https://chaotic-container-production.vercel.app/api?username=shobith-s)
-
-**Design Features:**
-- Deep charcoal to slate grey gradient background with subtle stone texture
-- Twisted roots and vines growing ONLY in margins between cards
-- Bioluminescent moss particles (electric cyan and soft green) with glow effects
-- Glassmorphism cards with dark green tint and subtle borders
-- High contrast electric cyan data numbers with glow effects
-- Fern accents in corners
-
-**Available Options:**
-- `theme=nature` - Use the nature theme
-- `chaos=1-10` - Controls moss density (default: 3, minimum effective value: 2)
-
-### Other Themes
-Available themes: `default`, `dracula`, `nord`, `tokyonight`, `synthwave`, `monokai`, `github_dark`, `catppuccin`, `nature`
+### Usage Examples
 
 ```markdown
-![My Stats](https://your-vercel-domain.vercel.app/api?username=YOUR_GITHUB_USERNAME&theme=dracula)
+# Basic usage
+![GitHub Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME)
+
+# With theme
+![GitHub Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=dracula)
+
+# With all-time commits
+![GitHub Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&include_all_commits=true)
+
+# With custom repos highlighted
+![GitHub Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&repos=repo1,repo2,repo3)
+
+# Full example
+![GitHub Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=tokyonight&include_all_commits=true)
+```
+
+## 🎨 Themes
+
+All 9 available themes:
+
+### default
+GitHub dark theme
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=default)
+```
+
+### dracula
+Dracula color scheme
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=dracula)
+```
+
+### nord
+Nord theme
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=nord)
+```
+
+### tokyonight
+Tokyo Night theme
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=tokyonight)
+```
+
+### synthwave
+Synthwave aesthetics
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=synthwave)
+```
+
+### monokai
+Monokai colors
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=monokai)
+```
+
+### github_dark
+GitHub official dark
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=github_dark)
+```
+
+### catppuccin
+Catppuccin theme
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=catppuccin)
+```
+
+### nature
+Nature theme with organic elements
+```markdown
+![Stats](https://your-domain.vercel.app/api?username=YOUR_USERNAME&theme=nature)
+```
+
+## 🏆 Rank System
+
+The ranking system uses **Anurag Hazra's github-readme-stats algorithm** which employs statistical methods (exponential CDF and log-normal CDF) instead of simple point-based scoring.
+
+### Rank Levels
+
+- **S** - Top 1%
+- **A+** - Top 12.5%
+- **A** - Top 25%
+- **A-** - Top 37.5%
+- **B+** - Top 50%
+- **B** - Top 62.5%
+- **B-** - Top 75%
+- **C+** - Top 87.5%
+- **C** - Everyone else
+
+### Ranking Formula
+
+The rank is calculated using weighted percentiles based on:
+
+- **Commits** (weight: 2, median: 250 or 1000 if `include_all_commits=true`)
+- **Pull Requests** (weight: 3, median: 50)
+- **Issues** (weight: 1, median: 25)
+- **Reviews** (weight: 1, median: 2)
+- **Stars** (weight: 4, median: 50)
+- **Followers** (weight: 1, median: 10)
+
+## 📋 Card Layout
+
+The SVG card displays a clean **3x3 grid layout** with 9 cards:
+
+### Row 1
+- **Identity** - Name, username, total contributions
+- **Streaks & Activity** - Current streak, longest streak, most active day
+- **Weekend Warrior** - Badge level, percentage
+
+### Row 2
+- **Core Stats** - Commits, PRs, reviews, issues with icons
+- **Last 7 Days** - Donut chart with daily breakdown
+- **Top Languages** - Progress bars with percentages
+
+### Row 3
+- **Top Repositories** - Top 3 repos
+- **Social & Account** - Followers, repos, account age
+- **Rank Score** - Circular progress with rank letter
+
+## 📝 License
+
+MIT License - See LICENSE file for details

@@ -8,8 +8,8 @@ This directory contains the modular implementation of the GitHub Entropy Stats A
 api/
 ├── index.js              # Main serverless handler
 ├── config/               # Configuration files
-│   ├── themes.js         # 8 theme definitions
-│   ├── ranks.js          # Rank system (C- to S+)
+│   ├── themes.js         # 9 theme definitions
+│   ├── ranks.js          # Rank system (S to C)
 │   └── colors.js         # UI color palette
 ├── utils/                # Utility functions
 │   ├── github.js         # GitHub GraphQL API integration
@@ -35,7 +35,7 @@ api/
 
 ## 🎨 Themes
 
-The following themes are available:
+The following 9 themes are available:
 - `default` - GitHub dark theme
 - `dracula` - Dracula color scheme
 - `nord` - Nord theme
@@ -44,30 +44,33 @@ The following themes are available:
 - `monokai` - Monokai colors
 - `github_dark` - GitHub official dark
 - `catppuccin` - Catppuccin theme
+- `nature` - Nature theme with organic elements
 
 ## 🏆 Rank System
 
-Ranks are calculated based on a weighted score:
-- Commits: 1 point each
-- Pull Requests: 5 points each
-- Reviews: 10 points each
-- Issues: 2 points each
-- Followers: 0.5 points each
+The ranking system uses **Anurag Hazra's github-readme-stats algorithm** which employs statistical methods (exponential CDF and log-normal CDF) for accurate percentile-based ranking.
 
-### Rank Tiers
-- **S+** (10000+): Legendary Contributor
-- **S** (5000+): Elite Developer
-- **S-** (2500+): Master Coder
-- **A++** (1500+): Senior Expert
-- **A+** (1000+): Expert Developer
-- **A** (750+): Advanced Developer
-- **A-** (500+): Skilled Developer
-- **B+** (300+): Intermediate Developer
-- **B** (200+): Regular Contributor
-- **B-** (100+): Active Developer
-- **C+** (50+): Growing Developer
-- **C** (25+): New Contributor
-- **C-** (0+): Beginner
+### Rank Levels
+- **S** - Top 1%
+- **A+** - Top 12.5%
+- **A** - Top 25%
+- **A-** - Top 37.5%
+- **B+** - Top 50%
+- **B** - Top 62.5%
+- **B-** - Top 75%
+- **C+** - Top 87.5%
+- **C** - Everyone else
+
+### Ranking Formula
+
+The rank is calculated using weighted percentiles based on:
+
+- **Commits** (weight: 2, median: 250 or 1000 if `include_all_commits=true`)
+- **Pull Requests** (weight: 3, median: 50)
+- **Issues** (weight: 1, median: 25)
+- **Reviews** (weight: 1, median: 2)
+- **Stars** (weight: 4, median: 50)
+- **Followers** (weight: 1, median: 10)
 
 ## 🔧 Usage
 
@@ -81,7 +84,7 @@ https://your-domain.vercel.app/api?username=GITHUB_USERNAME
 
 - `username` (required): GitHub username
 - `theme` (optional): Theme name (default: "default")
-- `chaos` (optional): Chaos level 0-5 (default: 3)
+- `include_all_commits` (optional): Count all-time commits instead of current year only (default: false)
 - `repos` (optional): Comma-separated list of repos to highlight
 
 ### Examples
@@ -93,11 +96,14 @@ https://your-domain.vercel.app/api?username=GITHUB_USERNAME
 # With custom theme
 /api?username=octocat&theme=dracula
 
-# With chaos level
-/api?username=octocat&chaos=5
+# With all-time commits
+/api?username=octocat&include_all_commits=true
 
 # With custom repos
 /api?username=octocat&repos=repo1,repo2,repo3
+
+# Full example
+/api?username=octocat&theme=tokyonight&include_all_commits=true
 ```
 
 ## 🛠️ Development
