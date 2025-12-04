@@ -152,7 +152,7 @@ The ranking system uses **Anurag Hazra's github-readme-stats algorithm** which e
 
 The rank is calculated using weighted percentiles based on:
 
-- **Commits** (weight: 2, median: 250 or 1000 if include_all_commits)
+- **Commits** (weight: 2, median: 250 or 1000 if `include_all_commits=true`)
 - **Pull Requests** (weight: 3, median: 50)
 - **Issues** (weight: 1, median: 25)
 - **Reviews** (weight: 1, median: 2)
