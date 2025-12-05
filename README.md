@@ -2,7 +2,7 @@
 
 > A beautiful, self-hostable GitHub stats card with multiple themes
 
-![Entropy Stats Preview](https://chaotic-container-production.vercel.app/api?username=shobith-s)
+![Entropy Stats Preview](https://chaotic-container-production.vercel.app/api?username=shobith-s&theme=monokai)
 
 ## ✨ Features
 
