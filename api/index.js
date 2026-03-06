@@ -940,30 +940,17 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
   ${renderLanguagesCard(data)}
   ${renderReposCard(data)}
 </svg>`.trim();
+}
 
-// SECTION 11: ERROR SVG GENERATOR
-// ============================================================================
 function generateErrorSVG(message, themeName = 'default') {
-  const theme = THEMES[themeName] || THEMES.default;
-  const t = theme;
-
   return `
-<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:${t.bg[0]};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${t.bg[1]};stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  
-  <rect width="900" height="500" fill="url(#bg-gradient)"/>
-  
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif">
+  <rect width="900" height="500" fill="${DS.canvas}"/>
   <g transform="translate(450, 250)">
-    <rect x="-200" y="-80" width="400" height="160" rx="16" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="2"/>
-    
-    <text x="0" y="-30" font-size="48" text-anchor="middle" fill="${t.accent}">⚠️</text>
-    <text x="0" y="10" font-size="16" font-weight="700" text-anchor="middle" fill="${t.text}">Error</text>
-    <text x="0" y="40" font-size="13" text-anchor="middle" fill="${t.textSec}">${message}</text>
+    <rect x="-200" y="-80" width="400" height="160" rx="10" fill="${DS.surface}" stroke="${DS.border}" stroke-width="1"/>
+    ${icon('issue', DS.red).replace('width="16" height="16"', 'width="32" height="32" x="-16" y="-50"')}
+    <text x="0" y="10" font-size="15" font-weight="500" text-anchor="middle" fill="${DS.text}">Error</text>
+    <text x="0" y="36" font-size="13" font-weight="400" text-anchor="middle" fill="${DS.muted}">${message}</text>
   </g>
 </svg>`.trim();
 }
