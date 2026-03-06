@@ -527,365 +527,344 @@ function assignPersona(stats) {
 }
 
 // ============================================================================
-// SECTION 8: SVG COMPONENT RENDERERS
+// SECTION 8: SVG RENDERERS — Strict Design System
 // ============================================================================
-function renderTitle(data, theme) {
-  const { login } = data;
-  const t = theme;
 
-  return `
-  <g transform="translate(450, 20)">
-    <text x="0" y="0" font-size="16" font-weight="700" fill="${t.text}" text-anchor="middle">
-      <tspan>GitHub Stats</tspan>
-    </text>
-    <text x="0" y="16" font-size="10" fill="${t.textSec}" text-anchor="middle">@${login}</text>
-  </g>`;
+// Design tokens — the ONLY colors permitted in SVG output
+const DS = {
+  canvas: '#0D1117',
+  surface: '#161B22',
+  border: '#21262D',
+  text: '#E6EDF3',
+  muted: '#8B949E',
+  blue: '#58A6FF',
+  green: '#3FB950',
+  violet: '#A371F7',
+  amber: '#D29922',
+  red: '#F85149',
+};
+
+// Grid constants — Fix 9
+const GRID = {
+  cols: [16, 314, 612],
+  rows: [16, 260],
+  cardW: 282,
+  cardH: 228,
+  pad: 20,
+};
+
+// formatNum — Fix 5: called on EVERY displayed number
+function formatNum(n) {
+  if (n == null) return '0';
+  n = Number(n);
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
 }
 
-function renderIdentity(data, theme, rotation) {
-  const { name, login, totalContributions } = data;
-  const t = theme;
-
-  return `
-  <g transform="translate(30, 40) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <text x="15" y="25" font-size="12" font-weight="600" fill="${t.textSec}">Identity</text>
-    <text x="15" y="55" font-size="20" font-weight="700" fill="${t.text}">${name || login}</text>
-    <text x="15" y="75" font-size="11" fill="${t.textSec}">@${login}</text>
-    <text x="15" y="105" font-size="11" fill="${t.textSec}">Total: ${totalContributions.toLocaleString()} contributions</text>
-  </g>`;
-}
-
-function renderStreaks(data, theme, rotation) {
-  const { streaks, totalContributions } = data;
-  const t = theme;
-
-  const currentStreak = streaks.currentStreak ?? 0;
-  const longestStreak = streaks.longestStreak ?? 0;
-  const mostActiveDay = streaks.mostActiveDay ?? { date: '', count: 0 };
-
-  const mostActiveDate = mostActiveDay.date ? new Date(mostActiveDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
-  const mostActiveDisplay = mostActiveDay.date ? `${mostActiveDate} (${mostActiveDay.count})` : 'N/A';
-
-  return `
-  <g transform="translate(300, 40) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.activity}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Streaks &amp; Activity</text></g>
-    
-    <g transform="translate(15, 50)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff8c42" stroke="#ff8c42" stroke-width="2">
-        ${ICONS.flame}
-      </svg>
-      <text x="24" y="12" font-size="12" fill="${t.textSec}">Current:</text>
-      <text x="220" y="12" font-size="13" font-weight="700" fill="#ff8c42" text-anchor="end">${currentStreak} days</text>
-    </g>
-    
-    <g transform="translate(15, 75)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="${t.yellow}" stroke="${t.yellow}" stroke-width="2">
-        ${ICONS.trophy}
-      </svg>
-      <text x="24" y="12" font-size="12" fill="${t.textSec}">Longest:</text>
-      <text x="220" y="12" font-size="13" font-weight="700" fill="${t.yellow}" text-anchor="end">${longestStreak} days</text>
-    </g>
-    
-    <g transform="translate(15, 100)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="${t.green}" stroke="${t.green}" stroke-width="2">
-        ${ICONS.calendar}
-      </svg>
-      <text x="24" y="12" font-size="12" fill="${t.textSec}">Most Active:</text>
-      <text x="220" y="12" font-size="13" font-weight="700" fill="${t.green}" text-anchor="end">${mostActiveDisplay}</text>
-    </g>
-  </g>`;
-}
-
-function renderWeekend(data, theme, rotation) {
-  const { weekendPercent, weekendBadge } = data;
-  const t = theme;
-
-  if (weekendBadge.level === 'None') {
-    return '';
+// Desaturate a hex color by 20% in HSL space — Fix 6
+function desaturate(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
   }
+  s = Math.max(0, s * 0.8); // reduce saturation by 20%
+  // HSL to RGB
+  function hue2rgb(p, q, t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; }
+  let r2, g2, b2;
+  if (s === 0) { r2 = g2 = b2 = l; }
+  else { const q = l < 0.5 ? l * (1 + s) : l + s - l * s; const p = 2 * l - q; r2 = hue2rgb(p, q, h + 1 / 3); g2 = hue2rgb(p, q, h); b2 = hue2rgb(p, q, h - 1 / 3); }
+  return '#' + [r2, g2, b2].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
+}
+
+// Consistent 16px Lucide-style icon paths — Fix 4
+const ICON = {
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  barChart: '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>',
+  activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  repo: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+  commit: '<circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/>',
+  pr: '<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M6 9v12"/>',
+  eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  issue: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  award: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+};
+
+function icon(name, color) {
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON[name]}</svg>`;
+}
+
+function renderCard(col, row) {
+  const x = GRID.cols[col];
+  const y = GRID.rows[row];
+  return `<rect x="${x}" y="${y}" width="${GRID.cardW}" height="${GRID.cardH}" rx="10" fill="${DS.surface}" stroke="${DS.border}" stroke-width="1"/>`;
+}
+
+function renderSectionLabel(x, y, iconName, label) {
+  return `<g transform="translate(${x}, ${y})">${icon(iconName, DS.muted)}<text x="22" y="12" font-size="11" font-weight="400" fill="${DS.muted}">${label}</text></g>`;
+}
+
+// --- Card renderers ---
+
+function renderIdentityCard(data) {
+  const { name, login, followers, totalRepos, totalStars } = data;
+  const cx = GRID.cols[0];
+  const cy = GRID.rows[0];
+  const displayName = (name || login).length > 20 ? (name || login).substring(0, 18) + '…' : (name || login);
 
   return `
-  <g transform="translate(570, 40) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.award}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Weekend Warrior</text></g>
-    
-    <g transform="translate(15, 60)">
-      <text x="0" y="0" font-size="16" font-weight="700" fill="${t.text}">${weekendBadge.level} Badge</text>
-      <text x="0" y="25" font-size="18" font-weight="800" fill="${weekendBadge.color}">${weekendPercent}%</text>
-    </g>
-    
-    <g transform="translate(170, 75)">
-      <circle cx="0" cy="0" r="30" fill="${weekendBadge.color}" fill-opacity="0.2" stroke="${weekendBadge.color}" stroke-width="2"/>
-      <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${weekendBadge.color}" stroke-width="2">
-        ${ICONS.award}
-      </svg>
+  <g>
+    ${renderCard(0, 0)}
+    <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+      ${renderSectionLabel(0, 0, 'user', 'IDENTITY')}
+
+      <text x="0" y="48" font-size="28" font-weight="600" fill="${DS.text}">${displayName}</text>
+      <text x="0" y="68" font-size="13" font-weight="400" fill="${DS.muted}">@${login}</text>
+
+      <line x1="0" y1="88" x2="242" y2="88" stroke="${DS.border}" stroke-width="1"/>
+
+      <g transform="translate(0, 108)">
+        <g>
+          ${icon('users', DS.muted)}
+          <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(followers)}</text>
+          <text x="20" y="26" font-size="10" font-weight="400" fill="${DS.muted}">FOLLOWERS</text>
+        </g>
+        <g transform="translate(85, 0)">
+          ${icon('repo', DS.muted)}
+          <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(totalRepos)}</text>
+          <text x="20" y="26" font-size="10" font-weight="400" fill="${DS.muted}">REPOS</text>
+        </g>
+        <g transform="translate(170, 0)">
+          ${icon('star', DS.amber)}
+          <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(totalStars)}</text>
+          <text x="20" y="26" font-size="10" font-weight="400" fill="${DS.muted}">STARS</text>
+        </g>
+      </g>
     </g>
   </g>`;
 }
 
-function renderStats(data, theme, rotation) {
+function renderRankCard(data) {
+  const { rankInfo } = data;
+  const cx = GRID.cols[1];
+  const cy = GRID.rows[0];
+  const centerX = GRID.cardW / 2;
+  const centerY = GRID.cardH / 2 + 8;
+
+  const radius = 68;
+  const circumference = 2 * Math.PI * radius;
+  const pct = Math.max(0, Math.min(100, 100 - rankInfo.percentile));
+  const offset = circumference - (pct / 100) * circumference;
+
+  return `
+  <g>
+    ${renderCard(1, 0)}
+    <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+      ${renderSectionLabel(0, 0, 'target', 'OVERALL RANK')}
+
+      <g transform="translate(${centerX - GRID.pad}, ${centerY - GRID.pad})">
+        <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${DS.border}" stroke-width="6"/>
+        <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${DS.violet}" stroke-width="6"
+                stroke-dasharray="${circumference}"
+                stroke-dashoffset="${offset}"
+                stroke-linecap="round"
+                transform="rotate(-90)"/>
+        <text x="0" y="-4" font-size="28" font-weight="600" fill="${DS.text}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
+        <text x="0" y="22" font-size="11" font-weight="400" fill="${DS.muted}" text-anchor="middle">${rankInfo.title}</text>
+      </g>
+    </g>
+  </g>`;
+}
+
+function renderCoreStatsCard(data) {
   const { commits, prs, reviews, issues } = data;
-  const t = theme;
+  const cx = GRID.cols[2];
+  const cy = GRID.rows[0];
+  const innerW = GRID.cardW - 2 * GRID.pad;
+  const halfW = (innerW - 10) / 2; // 10px gap between cells
 
-  return `
-  <g transform="translate(30, 195) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.barChart}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Core Stats</text></g>
-    
-    <g transform="translate(15, 50)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.success}" stroke="${COLOR_PALETTE.success}" stroke-width="2">
-        ${ICONS.commit}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Commits:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.success}" text-anchor="end">${commits.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(15, 73)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.primary}" stroke="${COLOR_PALETTE.primary}" stroke-width="2">
-        ${ICONS.pr}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Pull Requests:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.primary}" text-anchor="end">${prs.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(15, 96)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.warning}" stroke="${COLOR_PALETTE.warning}" stroke-width="2">
-        ${ICONS.eye}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Reviews:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.warning}" text-anchor="end">${reviews.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(15, 119)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.danger}" stroke="${COLOR_PALETTE.danger}" stroke-width="2">
-        ${ICONS.issue}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Issues:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.danger}" text-anchor="end">${issues.toLocaleString()}</text>
-    </g>
-  </g>`;
-}
+  const stats = [
+    { label: 'COMMITS', value: commits, color: DS.green, iconName: 'commit', col: 0, row: 0 },
+    { label: 'PRS', value: prs, color: DS.blue, iconName: 'pr', col: 1, row: 0 },
+    { label: 'REVIEWS', value: reviews, color: DS.muted, iconName: 'eye', col: 0, row: 1 },
+    { label: 'ISSUES', value: issues, color: DS.red, iconName: 'issue', col: 1, row: 1 }
+  ];
 
-function renderDistribution(data, theme, rotation) {
-  const { last7Days } = data;
-  const t = theme;
-
-  if (!last7Days || last7Days.length === 0) {
-    return '';
-  }
-
-  const total = last7Days.reduce((sum, d) => sum + (d.contributionCount ?? 0), 0);
-
-  if (total === 0) {
-    return '';
-  }
-
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#a855f7'];
-
-  let currentAngle = -90;
-  const radius = 45;
-  const centerX = 75;
-  const centerY = 80;
-
-  let segments = '';
-  let legend = '';
-  let legendY = 45;
-
-  last7Days.forEach((day, i) => {
-    const count = day.contributionCount ?? 0;
-    const percentage = (count / total) * 100;
-    const angle = (percentage / 100) * 360;
-
-    if (count > 0) {
-      const startAngle = currentAngle * (Math.PI / 180);
-      const endAngle = (currentAngle + angle) * (Math.PI / 180);
-
-      const x1 = centerX + radius * Math.cos(startAngle);
-      const y1 = centerY + radius * Math.sin(startAngle);
-      const x2 = centerX + radius * Math.cos(endAngle);
-      const y2 = centerY + radius * Math.sin(endAngle);
-
-      const largeArc = angle > 180 ? 1 : 0;
-
-      segments += `
-        <path d="M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z" 
-              fill="${colors[day.weekday % colors.length]}" 
-              fill-opacity="0.7" 
-              stroke="${t.cardBorder}" 
-              stroke-width="0.5"/>`;
-
-      const dayName = days[day.weekday];
-      legend += `
-        <g transform="translate(160, ${legendY})">
-          <circle cx="0" cy="0" r="4" fill="${colors[day.weekday % colors.length]}"/>
-          <text x="10" y="4" font-size="10" fill="${t.textSec}">${dayName}: ${count}</text>
-        </g>`;
-
-      legendY += 15;
-      currentAngle += angle;
-    }
-  });
-
-  return `
-  <g transform="translate(300, 195) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.pieChart}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Last 7 Days</text></g>
-    
-    <g transform="translate(10, 10)">
-      ${segments}
-      <circle cx="${centerX}" cy="${centerY}" r="25" fill="${t.card}"/>
-      <text x="${centerX}" y="${centerY}" font-size="14" font-weight="700" fill="${t.accent}" text-anchor="middle" dominant-baseline="middle">${total}</text>
-    </g>
-    
-    ${legend}
-  </g>`;
-}
-
-function renderLanguages(data, theme, rotation) {
-  const { languages } = data;
-  const t = theme;
-
-  if (!languages || languages.length === 0) {
-    return '';
-  }
-
-  const top5 = languages.slice(0, 5);
-
-  let languageItems = '';
-  const maxLangNameLength = 15;
-
-  top5.forEach((lang, i) => {
-    const y = 50 + (i * 18);
-    const barWidth = (lang.percentage / 100) * 150;
-    const displayName = lang.name.length > maxLangNameLength && maxLangNameLength >= 3
-      ? lang.name.substring(0, maxLangNameLength - 3) + '...'
-      : lang.name;
-
-    languageItems += `
-      <g transform="translate(15, ${y})">
-        <rect width="150" height="12" rx="6" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1"/>
-        <rect width="${barWidth}" height="12" rx="6" fill="${lang.color || t.accent}" fill-opacity="0.8"/>
-        <text x="158" y="9" font-size="10" fill="${t.textSec}">${displayName}</text>
-        <text x="235" y="9" font-size="10" font-weight="600" fill="${t.text}" text-anchor="end">${lang.percentage.toFixed(1)}%</text>
+  let cells = '';
+  stats.forEach(s => {
+    const sx = s.col * (halfW + 10);
+    const sy = 32 + s.row * 90;
+    cells += `
+      <g transform="translate(${sx}, ${sy})">
+        <rect width="${halfW}" height="78" rx="10" fill="${DS.border}" fill-opacity="0.4"/>
+        <g transform="translate(12, 16)">
+          ${icon(s.iconName, s.color)}
+          <text x="20" y="12" font-size="10" font-weight="400" fill="${DS.muted}">${s.label}</text>
+        </g>
+        <text x="12" y="58" font-size="28" font-weight="600" fill="${s.color}">${formatNum(s.value)}</text>
       </g>`;
   });
 
   return `
-  <g transform="translate(570, 195) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.code}</svg>
-      <text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Top Languages</text>
+  <g>
+    ${renderCard(2, 0)}
+    <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+      ${renderSectionLabel(0, 0, 'barChart', 'CORE STATS')}
+      ${cells}
     </g>
-    
-    ${languageItems}
   </g>`;
 }
 
-function renderRepos(data, theme, rotation) {
+function renderStreaksCard(data) {
+  const { streaks } = data;
+  const cx = GRID.cols[0];
+  const cy = GRID.rows[1];
+
+  const current = streaks.currentStreak ?? 0;
+  const longest = streaks.longestStreak ?? 0;
+  const mostActive = streaks.mostActiveDay ?? { date: '', count: 0 };
+  const activeDate = mostActive.date ? new Date(mostActive.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+
+  return `
+  <g>
+    ${renderCard(0, 1)}
+    <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+      ${renderSectionLabel(0, 0, 'activity', 'ACTIVITY STREAKS')}
+
+      <g transform="translate(0, 40)">
+        <text x="0" y="0" font-size="10" font-weight="400" fill="${DS.muted}">CURRENT STREAK</text>
+        <g transform="translate(0, 14)">
+          ${icon('flame', DS.amber)}
+          <text x="22" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(current)}</text>
+          <text x="${22 + String(formatNum(current)).length * 16}" y="13" font-size="13" font-weight="400" fill="${DS.muted}"> days</text>
+        </g>
+      </g>
+
+      <g transform="translate(0, 108)">
+        <text x="0" y="0" font-size="10" font-weight="400" fill="${DS.muted}">LONGEST STREAK</text>
+        <g transform="translate(0, 14)">
+          ${icon('award', DS.amber)}
+          <text x="22" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(longest)}</text>
+          <text x="${22 + String(formatNum(longest)).length * 16}" y="13" font-size="13" font-weight="400" fill="${DS.muted}"> days</text>
+        </g>
+      </g>
+
+      <g transform="translate(0, 172)">
+        ${icon('calendar', DS.blue)}
+        <text x="22" y="12" font-size="11" font-weight="400" fill="${DS.muted}">Most Active:</text>
+        <text x="100" y="12" font-size="13" font-weight="400" fill="${DS.blue}">${activeDate}</text>
+      </g>
+    </g>
+  </g>`;
+}
+
+function renderLanguagesCard(data) {
+  const { languages } = data;
+  const cx = GRID.cols[1];
+  const cy = GRID.rows[1];
+  const barTrackW = 242; // cardW - 2*pad
+
+  if (!languages || languages.length === 0) {
+    return `<g>${renderCard(1, 1)}
+      <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+        ${renderSectionLabel(0, 0, 'code', 'TOP LANGUAGES')}
+        <text x="${GRID.cardW / 2 - GRID.pad}" y="${GRID.cardH / 2}" font-size="13" font-weight="400" fill="${DS.muted}" text-anchor="middle">No language data</text>
+      </g>
+    </g>`;
+  }
+
+  const top4 = languages.slice(0, 4);
+  let items = '';
+  top4.forEach((lang, i) => {
+    const ly = 40 + (i * 44);
+    const barW = Math.max(2, (lang.percentage / 100) * barTrackW);
+    const displayName = lang.name.length > 14 ? lang.name.substring(0, 12) + '…' : lang.name;
+    const barColor = desaturate(lang.color || DS.blue);
+
+    items += `
+      <g transform="translate(0, ${ly})">
+        <text x="0" y="0" font-size="13" font-weight="400" fill="${DS.text}">${displayName}</text>
+        <text x="242" y="0" font-size="13" font-weight="400" fill="${DS.muted}" text-anchor="end">${lang.percentage.toFixed(0)}%</text>
+        <g transform="translate(0, 8)">
+          <rect width="${barTrackW}" height="8" rx="4" fill="${DS.border}"/>
+          <rect width="${barW}" height="8" rx="4" fill="${barColor}"/>
+        </g>
+      </g>`;
+  });
+
+  return `
+  <g>
+    ${renderCard(1, 1)}
+    <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+      ${renderSectionLabel(0, 0, 'code', 'TOP LANGUAGES')}
+      ${items}
+    </g>
+  </g>`;
+}
+
+function renderReposCard(data) {
   const { repos } = data;
-  const t = theme;
+  const cx = GRID.cols[2];
+  const cy = GRID.rows[1];
 
   if (!repos || repos.length === 0) {
-    return '';
+    return `<g>${renderCard(2, 1)}
+      <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+        ${renderSectionLabel(0, 0, 'repo', 'TOP REPOSITORIES')}
+        <text x="${GRID.cardW / 2 - GRID.pad}" y="${GRID.cardH / 2}" font-size="13" font-weight="400" fill="${DS.muted}" text-anchor="middle">No repositories</text>
+      </g>
+    </g>`;
   }
 
   const top3 = repos.slice(0, 3);
-
-  let repoItems = '';
+  let items = '';
   top3.forEach((repo, i) => {
-    const y = 50 + (i * 28);
+    const ry = 38 + (i * 52); // Fix 8: 52px pitch
+    const repoName = repo.name.length > 22 ? repo.name.substring(0, 20) + '…' : repo.name;
+    const dotColor = repo.langColor || DS.muted;
 
-    repoItems += `
-      <g transform="translate(15, ${y})">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="${t.accent}" stroke="${t.accent}" stroke-width="1">
-          ${ICONS.repo}
-        </svg>
-        <text x="22" y="12" font-size="12" font-weight="600" fill="${t.text}">${repo.name}</text>
+    items += `
+      <g transform="translate(0, ${ry})">
+        <circle cx="3" cy="8" r="3" fill="${dotColor}"/>
+        <text x="14" y="12" font-size="13" font-weight="400" fill="${DS.text}">${repoName}</text>
+        <g transform="translate(222, 0)">
+          ${icon('star', DS.amber)}
+          <text x="18" y="12" font-size="13" font-weight="400" fill="${DS.amber}">${formatNum(repo.stars)}</text>
+        </g>
+        ${i < top3.length - 1 ? `<line x1="0" y1="32" x2="242" y2="32" stroke="${DS.border}" stroke-width="1"/>` : ''}
       </g>`;
   });
 
   return `
-  <g transform="translate(30, 350) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.star}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Top Repositories</text></g>
-    
-    ${repoItems}
-  </g>`;
-}
-
-function renderSocial(data, theme, rotation) {
-  const { followers, totalRepos, accountAge } = data;
-  const t = theme;
-
-  return `
-  <g transform="translate(300, 350) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.users}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Social &amp; Account</text></g>
-    
-    <g transform="translate(15, 50)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.purple}" stroke="${COLOR_PALETTE.purple}" stroke-width="2">
-        ${ICONS.users}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Followers:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.purple}" text-anchor="end">${followers.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(15, 75)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${COLOR_PALETTE.cyan}" stroke="${COLOR_PALETTE.cyan}" stroke-width="1">
-        ${ICONS.repo}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Repositories:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${COLOR_PALETTE.cyan}" text-anchor="end">${totalRepos.toLocaleString()}</text>
-    </g>
-    
-    <g transform="translate(15, 100)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="${t.accent}" stroke="${t.accent}" stroke-width="2">
-        ${ICONS.calendar}
-      </svg>
-      <text x="25" y="13" font-size="12" fill="${t.textSec}">Account Age:</text>
-      <text x="220" y="13" font-size="13" font-weight="700" fill="${t.accent}" text-anchor="end">${accountAge.displayText}</text>
-    </g>
-  </g>`;
-}
-
-function renderRank(data, theme, rotation) {
-  const { rankInfo } = data;
-  const t = theme;
-
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
-  // Progress ring shows 100 - percentile (so S rank with percentile ~1 shows nearly full circle at ~99%)
-  const progressPercentage = 100 - rankInfo.percentile;
-  const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
-
-  return `
-  <g transform="translate(570, 350) rotate(0, 125, 70)">
-    <rect width="250" height="140" rx="8" fill="${t.card}" stroke="${t.cardBorder}" stroke-width="1" filter="url(#shadow)"/>
-    <g transform="translate(15, 12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${t.accent}" stroke-width="2">${ICONS.target}</svg><text x="22" y="13" font-size="13" font-weight="600" fill="${t.text}">Rank Score</text></g>
-    
-    <g transform="translate(125, 80)">
-      <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${t.cardBorder}" stroke-width="8"/>
-      <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${rankInfo.color}" stroke-width="8" 
-              stroke-dasharray="${circumference}" 
-              stroke-dashoffset="${strokeDashoffset}"
-              stroke-linecap="round"
-              transform="rotate(-90)"/>
-      <text x="0" y="0" font-size="28" font-weight="800" fill="${rankInfo.color}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
+  <g>
+    ${renderCard(2, 1)}
+    <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
+      ${renderSectionLabel(0, 0, 'repo', 'TOP REPOSITORIES')}
+      ${items}
     </g>
   </g>`;
 }
 
 // ============================================================================
-// SECTION 10: MAIN SVG GENERATOR
+// SECTION 9: MAIN SVG GENERATOR
 // ============================================================================
 function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = null, includeAllCommits = false) {
-  const theme = THEMES[themeName] || THEMES.default;
-  const t = theme;
-
+  // NOTE: themes are preserved for future use but the SVG now uses the strict DS palette
   // Extract data
   const contributions = userData.contributionsCollection;
   const commits = contributions?.totalCommitContributions ?? 0;
@@ -895,56 +874,32 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
   const totalIssues = includeAllCommits ? ((userData.openIssues?.totalCount ?? 0) + (userData.closedIssues?.totalCount ?? 0)) : issuesOpened;
   const followers = userData.followers?.totalCount ?? 0;
   const totalRepos = userData.repositories?.totalCount ?? 0;
-  const totalContributions = contributions?.contributionCalendar?.totalContributions ?? 0;
 
-  // Calculate total stars across all repositories
+  // Calculate total stars
   const totalStars = userData.repositories?.nodes?.reduce((sum, r) => sum + (r.stargazers?.totalCount ?? 0), 0) ?? 0;
 
-  // Calculate rank using the new algorithm
+  // Calculate rank
   const rankInfo = calculateRank({
     all_commits: includeAllCommits,
-    commits: commits,
-    prs: prs,
-    issues: totalIssues,
-    reviews: reviews,
-    stars: totalStars,
-    followers: followers
+    commits, prs, issues: totalIssues, reviews, stars: totalStars, followers
   });
 
   // Calculate streaks
   const streaks = calculateStreaks(contributions?.contributionCalendar);
-
-  // Weekend warrior
-  const weekendPercent = calculateWeekendWarrior(streaks.allDays);
-  const weekendBadge = getWeekendBadgeLevel(weekendPercent);
-
-  // Account age
-  const accountAge = calculateAccountAge(userData.createdAt);
-
-  // Persona
-  const persona = assignPersona({
-    commits,
-    prs,
-    reviews,
-    issues: totalIssues,
-    stars: totalStars
-  });
 
   // Languages
   const languageMap = new Map();
   userData.repositories?.nodes?.forEach(repo => {
     if (repo.primaryLanguage) {
       const lang = repo.primaryLanguage.name;
-      const count = languageMap.get(lang) || 0;
-      languageMap.set(lang, count + 1);
+      languageMap.set(lang, (languageMap.get(lang) || 0) + 1);
     }
   });
 
   const totalLangRepos = Array.from(languageMap.values()).reduce((sum, count) => sum + count, 0);
   const languages = Array.from(languageMap.entries())
     .map(([name, count]) => ({
-      name,
-      count,
+      name, count,
       percentage: (count / totalLangRepos) * 100,
       color: getLanguageColor(name)
     }))
@@ -960,148 +915,32 @@ function generateSVG(userData, themeName = 'default', chaos = 3, customRepos = n
     .map(r => ({
       name: r.name,
       stars: r.stargazers?.totalCount ?? 0,
-      forks: r.forkCount ?? 0
+      forks: r.forkCount ?? 0,
+      langColor: r.primaryLanguage?.color || DS.muted
     }))
     .sort((a, b) => b.stars - a.stars);
-
-  // Generate particles for chaos effect
-  const particles = generateParticles(userData.login, chaos * 10, 900, 500);
-
-  // Remove all rotations for clean grid layout
-  const rotations = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   // Build data object
   const data = {
     name: userData.name,
     login: userData.login,
-    persona,
-    rankInfo,
-    streaks,
-    totalContributions,
-    commits,
-    prs,
-    reviews,
-    issues: totalIssues,
-    weekendPercent,
-    weekendBadge,
-    last7Days: streaks.last7Days,
-    languages,
-    repos,
-    followers,
-    totalRepos,
-    accountAge
+    rankInfo, streaks, commits, prs, reviews,
+    issues: totalIssues, languages, repos,
+    followers, totalRepos, totalStars
   };
 
-  // Generate SVG defs
-  const defs = `
-  <defs>
-    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:${t.bg[0]};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${t.bg[1]};stop-opacity:1" />
-    </linearGradient>
-    
-    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:${t.gradient1};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${t.gradient2};stop-opacity:1" />
-    </linearGradient>
-    
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="2" stdDeviation="8" flood-opacity="0.15"/>
-    </filter>
-    
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    
-    <!-- Subtle noise texture -->
-    <filter id="noise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
-      <feColorMatrix type="saturate" values="0"/>
-      <feBlend in="SourceGraphic" in2="noise" mode="multiply" />
-    </filter>
-  </defs>`;
-
-  // Generate particles
-  const particlesSVG = particles.map(p =>
-    `<circle cx="${p.x}" cy="${p.y}" r="${p.size}" fill="${t.accent}" opacity="${p.opacity}"/>`
-  ).join('\n    ');
-
-  // Generate components
-  const components = `
-    ${renderTitle(data, theme)}
-    ${renderIdentity(data, theme, rotations[0])}
-    ${renderStreaks(data, theme, rotations[1])}
-    ${renderWeekend(data, theme, rotations[2])}
-    ${renderStats(data, theme, rotations[3])}
-    ${renderDistribution(data, theme, rotations[4])}
-    ${renderLanguages(data, theme, rotations[5])}
-    ${renderRepos(data, theme, rotations[6])}
-    ${renderSocial(data, theme, rotations[7])}
-    ${renderRank(data, theme, rotations[8])}
-  `;
-
-  // Check if using nature theme
-  if (themeName === 'nature') {
-    // Nature theme SVG
-    const natureDefs = `
-    <defs>
-      ${renderNatureFilters(theme)}
-    </defs>`;
-
-    const natureComponents = `
-      ${renderNatureIdentityCard(data, theme)}
-      ${renderNatureContributionsCard(data, theme)}
-      ${renderNatureLanguagesCard(data, theme)}
-      ${renderNatureReposCard(data, theme)}
-    `;
-
-    return `
-<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
-  ${natureDefs}
-  
-  ${renderNatureBackground(theme, chaos)}
-  
-  ${renderNatureElements(theme, chaos, userData.login)}
-  
-  <style>
-    text {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    }
-  </style>
-  
-  ${natureComponents}
-</svg>`.trim();
-  }
-
-  // Build final SVG (original themes)
+  // Assemble SVG — no filters, no gradients, no defs needed
   return `
-<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
-  ${defs}
-  
-  <rect width="900" height="500" fill="url(#bg-gradient)"/>
-  
-  <!-- Subtle noise overlay -->
-  <rect width="900" height="500" fill="${t.bg[0]}" opacity="0.02" filter="url(#noise)"/>
-  
-  <g opacity="0.3">
-    ${particlesSVG}
-  </g>
-  
-  <style>
-    text {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    }
-  </style>
-  
-  ${components}
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif">
+  <rect width="900" height="500" fill="${DS.canvas}"/>
+  ${renderIdentityCard(data)}
+  ${renderRankCard(data)}
+  ${renderCoreStatsCard(data)}
+  ${renderStreaksCard(data)}
+  ${renderLanguagesCard(data)}
+  ${renderReposCard(data)}
 </svg>`.trim();
-}
 
-// ============================================================================
 // SECTION 11: ERROR SVG GENERATOR
 // ============================================================================
 function generateErrorSVG(message, themeName = 'default') {
