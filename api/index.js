@@ -616,7 +616,7 @@ function renderCard(col, row) {
 }
 
 function renderSectionLabel(x, y, iconName, label) {
-  return `<g transform="translate(${x}, ${y})">${icon(iconName, DS.muted)}<text x="22" y="12" font-size="11" font-weight="400" fill="${DS.muted}">${label}</text></g>`;
+  return `<g transform="translate(${x}, ${y})">${icon(iconName, DS.muted)}<text x="22" y="12" font-size="11" font-weight="600" fill="${DS.muted}" letter-spacing="1.2">${label}</text></g>`;
 }
 
 // --- Card renderers ---
@@ -633,12 +633,12 @@ function renderIdentityCard(data) {
     <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
       ${renderSectionLabel(0, 0, 'user', 'IDENTITY')}
 
-      <text x="0" y="48" font-size="28" font-weight="600" fill="${DS.text}">${displayName}</text>
-      <text x="0" y="68" font-size="13" font-weight="400" fill="${DS.muted}">@${login}</text>
+      <text x="0" y="44" font-size="28" font-weight="600" fill="${DS.text}">${displayName}</text>
+      <text x="0" y="64" font-size="13" font-weight="400" fill="${DS.muted}">@${login}</text>
 
-      <line x1="0" y1="88" x2="242" y2="88" stroke="${DS.border}" stroke-width="1"/>
+      <line x1="0" y1="82" x2="242" y2="82" stroke="${DS.border}" stroke-width="1"/>
 
-      <g transform="translate(0, 108)">
+      <g transform="translate(0, 100)">
         <g>
           ${icon('users', DS.muted)}
           <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(followers)}</text>
@@ -666,7 +666,7 @@ function renderRankCard(data) {
   const centerX = GRID.cardW / 2;
   const centerY = GRID.cardH / 2 + 8;
 
-  const radius = 68;
+  const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const pct = Math.max(0, Math.min(100, 100 - rankInfo.percentile));
   const offset = circumference - (pct / 100) * circumference;
@@ -678,14 +678,14 @@ function renderRankCard(data) {
       ${renderSectionLabel(0, 0, 'target', 'OVERALL RANK')}
 
       <g transform="translate(${centerX - GRID.pad}, ${centerY - GRID.pad})">
-        <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${DS.border}" stroke-width="6"/>
+        <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${DS.border}" stroke-width="8" opacity="0.6"/>
         <circle cx="0" cy="0" r="${radius}" fill="none" stroke="${DS.violet}" stroke-width="6"
                 stroke-dasharray="${circumference}"
                 stroke-dashoffset="${offset}"
                 stroke-linecap="round"
                 transform="rotate(-90)"/>
-        <text x="0" y="-4" font-size="28" font-weight="600" fill="${DS.text}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
-        <text x="0" y="22" font-size="11" font-weight="400" fill="${DS.muted}" text-anchor="middle">${rankInfo.title}</text>
+        <text x="0" y="-6" font-size="36" font-weight="700" fill="${DS.text}" text-anchor="middle" dominant-baseline="middle">${rankInfo.rank}</text>
+        <text x="0" y="24" font-size="11" font-weight="400" fill="${DS.muted}" text-anchor="middle">${rankInfo.title}</text>
       </g>
     </g>
   </g>`;
@@ -701,22 +701,22 @@ function renderCoreStatsCard(data) {
   const stats = [
     { label: 'COMMITS', value: commits, color: DS.green, iconName: 'commit', col: 0, row: 0 },
     { label: 'PRS', value: prs, color: DS.blue, iconName: 'pr', col: 1, row: 0 },
-    { label: 'REVIEWS', value: reviews, color: DS.muted, iconName: 'eye', col: 0, row: 1 },
+    { label: 'REVIEWS', value: reviews, color: DS.amber, iconName: 'eye', col: 0, row: 1 },
     { label: 'ISSUES', value: issues, color: DS.red, iconName: 'issue', col: 1, row: 1 }
   ];
 
   let cells = '';
   stats.forEach(s => {
     const sx = s.col * (halfW + 10);
-    const sy = 32 + s.row * 90;
+    const sy = 32 + s.row * 88;
     cells += `
       <g transform="translate(${sx}, ${sy})">
-        <rect width="${halfW}" height="78" rx="10" fill="${DS.border}" fill-opacity="0.4"/>
+        <rect width="${halfW}" height="80" rx="10" fill="${DS.border}" fill-opacity="0.4"/>
         <g transform="translate(12, 16)">
           ${icon(s.iconName, s.color)}
           <text x="20" y="12" font-size="10" font-weight="400" fill="${DS.muted}">${s.label}</text>
         </g>
-        <text x="12" y="58" font-size="28" font-weight="600" fill="${s.color}">${formatNum(s.value)}</text>
+        <text x="12" y="56" font-size="28" font-weight="600" fill="${s.color}">${formatNum(s.value)}</text>
       </g>`;
   });
 
@@ -751,7 +751,7 @@ function renderStreaksCard(data) {
         <g transform="translate(0, 14)">
           ${icon('flame', DS.amber)}
           <text x="22" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(current)}</text>
-          <text x="${22 + String(formatNum(current)).length * 16}" y="13" font-size="13" font-weight="400" fill="${DS.muted}"> days</text>
+          <text x="72" y="13" font-size="13" font-weight="400" fill="${DS.muted}">days</text>
         </g>
       </g>
 
@@ -760,7 +760,7 @@ function renderStreaksCard(data) {
         <g transform="translate(0, 14)">
           ${icon('award', DS.amber)}
           <text x="22" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(longest)}</text>
-          <text x="${22 + String(formatNum(longest)).length * 16}" y="13" font-size="13" font-weight="400" fill="${DS.muted}"> days</text>
+          <text x="72" y="13" font-size="13" font-weight="400" fill="${DS.muted}">days</text>
         </g>
       </g>
 
@@ -794,15 +794,15 @@ function renderLanguagesCard(data) {
     const ly = 40 + (i * 44);
     const barW = Math.max(2, (lang.percentage / 100) * barTrackW);
     const displayName = lang.name.length > 14 ? lang.name.substring(0, 12) + '…' : lang.name;
-    const barColor = desaturate(lang.color || DS.blue);
+    const barColor = lang.color || DS.blue;
 
     items += `
       <g transform="translate(0, ${ly})">
         <text x="0" y="0" font-size="13" font-weight="400" fill="${DS.text}">${displayName}</text>
         <text x="242" y="0" font-size="13" font-weight="400" fill="${DS.muted}" text-anchor="end">${lang.percentage.toFixed(0)}%</text>
         <g transform="translate(0, 8)">
-          <rect width="${barTrackW}" height="8" rx="4" fill="${DS.border}"/>
-          <rect width="${barW}" height="8" rx="4" fill="${barColor}"/>
+          <rect width="${barTrackW}" height="8" rx="4" fill="${DS.border}" opacity="0.6"/>
+          <rect width="${barW}" height="8" rx="4" fill="${barColor}" fill-opacity="0.85"/>
         </g>
       </g>`;
   });
@@ -834,7 +834,7 @@ function renderReposCard(data) {
   const top3 = repos.slice(0, 3);
   let items = '';
   top3.forEach((repo, i) => {
-    const ry = 38 + (i * 52); // Fix 8: 52px pitch
+    const ry = 38 + (i * 58); // 58px pitch
     const repoName = repo.name.length > 22 ? repo.name.substring(0, 20) + '…' : repo.name;
     const dotColor = repo.langColor || DS.muted;
 
@@ -842,11 +842,11 @@ function renderReposCard(data) {
       <g transform="translate(0, ${ry})">
         <circle cx="3" cy="8" r="3" fill="${dotColor}"/>
         <text x="14" y="12" font-size="13" font-weight="400" fill="${DS.text}">${repoName}</text>
-        <g transform="translate(222, 0)">
+        <g transform="translate(208, 0)">
           ${icon('star', DS.amber)}
-          <text x="18" y="12" font-size="13" font-weight="400" fill="${DS.amber}">${formatNum(repo.stars)}</text>
+          <text x="20" y="12" font-size="13" font-weight="400" fill="${DS.amber}" text-anchor="end">${formatNum(repo.stars)}</text>
         </g>
-        ${i < top3.length - 1 ? `<line x1="0" y1="32" x2="242" y2="32" stroke="${DS.border}" stroke-width="1"/>` : ''}
+        ${i < top3.length - 1 ? `<line x1="0" y1="38" x2="242" y2="38" stroke="${DS.border}" stroke-width="1"/>` : ''}
       </g>`;
   });
 
