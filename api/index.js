@@ -633,26 +633,26 @@ function renderIdentityCard(data) {
     <g transform="translate(${cx + GRID.pad}, ${cy + GRID.pad})">
       ${renderSectionLabel(0, 0, 'user', 'IDENTITY')}
 
-      <text x="0" y="44" font-size="28" font-weight="600" fill="${DS.text}">${displayName}</text>
-      <text x="0" y="64" font-size="13" font-weight="400" fill="${DS.muted}">@${login}</text>
+      <text x="104" y="29" font-size="28" font-weight="600" fill="${DS.text}">${displayName}</text>
+      <text x="0" y="44" font-size="13" font-weight="400" fill="${DS.muted}">@${login}</text>
 
-      <line x1="0" y1="82" x2="242" y2="82" stroke="${DS.border}" stroke-width="1"/>
+      <line x1="0" y1="62" x2="242" y2="62" stroke="${DS.border}" stroke-width="1"/>
 
-      <g transform="translate(0, 100)">
-        <g>
+      <g transform="translate(0, 0)">
+        <g transform="translate(25, 0)">
           ${icon('users', DS.muted)}
-          <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(followers)}</text>
-          <text x="20" y="26" font-size="10" font-weight="400" fill="${DS.muted}">FOLLOWERS</text>
+          <text x="0" y="120" font-size="19" font-weight="500" fill="${DS.text}">${formatNum(followers)}</text>
+          <text x="-25" y="152" font-size="10" font-weight="400" fill="${DS.muted}">FOLLOWERS</text>
         </g>
-        <g transform="translate(85, 0)">
+        <g transform="translate(104, 0)">
           ${icon('repo', DS.muted)}
-          <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(totalRepos)}</text>
-          <text x="20" y="26" font-size="10" font-weight="400" fill="${DS.muted}">REPOS</text>
+          <text x="0" y="120" font-size="19" font-weight="500" fill="${DS.text}">${formatNum(totalRepos)}</text>
+          <text x="-5" y="152" font-size="10" font-weight="400" fill="${DS.muted}">REPOS</text>
         </g>
-        <g transform="translate(170, 0)">
+        <g transform="translate(181, 0)">
           ${icon('star', DS.amber)}
-          <text x="20" y="12" font-size="15" font-weight="500" fill="${DS.text}">${formatNum(totalStars)}</text>
-          <text x="20" y="26" font-size="10" font-weight="400" fill="${DS.muted}">STARS</text>
+          <text x="0" y="120" font-size="19" font-weight="500" fill="${DS.text}">${formatNum(totalStars)}</text>
+          <text x="-5" y="152" font-size="10" font-weight="400" fill="${DS.muted}">STARS</text>
         </g>
       </g>
     </g>
@@ -712,11 +712,11 @@ function renderCoreStatsCard(data) {
     cells += `
       <g transform="translate(${sx}, ${sy})">
         <rect width="${halfW}" height="80" rx="10" fill="${DS.border}" fill-opacity="0.4"/>
-        <g transform="translate(12, 16)">
+        <g transform="translate(${halfW / 2 - 18}, 16)">
           ${icon(s.iconName, s.color)}
           <text x="20" y="12" font-size="10" font-weight="400" fill="${DS.muted}">${s.label}</text>
         </g>
-        <text x="12" y="56" font-size="28" font-weight="600" fill="${s.color}">${formatNum(s.value)}</text>
+        <text x="${halfW / 2 - 18}" y="56" font-size="28" font-weight="600" fill="${s.color}">${formatNum(s.value)}</text>
       </g>`;
   });
 
@@ -750,8 +750,8 @@ function renderStreaksCard(data) {
         <text x="0" y="0" font-size="10" font-weight="400" fill="${DS.muted}">CURRENT STREAK</text>
         <g transform="translate(0, 14)">
           ${icon('flame', DS.amber)}
-          <text x="22" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(current)}</text>
-          <text x="72" y="13" font-size="13" font-weight="400" fill="${DS.muted}">days</text>
+          <text x="152" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(current)}</text>
+          <text x="186" y="13" font-size="13" font-weight="400" fill="${DS.muted}">days</text>
         </g>
       </g>
 
@@ -759,12 +759,12 @@ function renderStreaksCard(data) {
         <text x="0" y="0" font-size="10" font-weight="400" fill="${DS.muted}">LONGEST STREAK</text>
         <g transform="translate(0, 14)">
           ${icon('award', DS.amber)}
-          <text x="22" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(longest)}</text>
-          <text x="72" y="13" font-size="13" font-weight="400" fill="${DS.muted}">days</text>
+          <text x="143" y="13" font-size="28" font-weight="600" fill="${DS.text}">${formatNum(longest)}</text>
+          <text x="186" y="13" font-size="13" font-weight="400" fill="${DS.muted}">days</text>
         </g>
       </g>
 
-      <g transform="translate(0, 172)">
+      <g transform="translate(0, 173)">
         ${icon('calendar', DS.blue)}
         <text x="22" y="12" font-size="11" font-weight="400" fill="${DS.muted}">Most Active:</text>
         <text x="100" y="12" font-size="13" font-weight="400" fill="${DS.blue}">${activeDate}</text>
