@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Card Editor v2 — GitHub Stats</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0a0f; color: #e6edf3;
+    display: flex; height: 100vh; overflow: hidden;
+  }
+
+  /* Canvas */
+  .canvas-area {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px; position: relative; overflow: hidden;
+  }
+  .canvas-title {
+    font-size: 12px; font-weight: 500; color: #8b949e;
+    margin-bottom: 8px; letter-spacing: 0.5px;
+  }
+  .svg-wrap {
+    border: 1px solid #21262d; border-radius: 8px; overflow: visible;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: relative;
+  }
+  #main-svg { display: block; }
+
+  /* Guides */
+  .guide-line { pointer-events: none; }
+
+  /* Selection */
+  .card-group { cursor: grab; }
+  .card-group:active { cursor: grabbing; }
+  .card-group.selected .card-bg { stroke: #58a6ff; stroke-width: 2; }
+  .inner-el { cursor: pointer; }
+  .inner-el:hover { filter: drop-shadow(0 0 2px rgba(88,166,255,0.4)); }
+  .card-group.selected .inner-el { cursor: grab; }
+  .card-group.selected .inner-el:active { cursor: grabbing; }
+  .inner-el.selected { filter: drop-shadow(0 0 3px #58a6ff); }
+  .resize-handle {
+    fill: #58a6ff; stroke: #0d1117; stroke-width: 1;
+    cursor: nwse-resize; opacity: 0; transition: opacity 0.15s;
+  }
+  .card-group.selected .resize-handle { opacity: 1; }
+
+  /* Rulers */
+  .ruler {
+    background: #161b22; position: absolute;
+  }
+  .ruler-h {
+    top: 0; left: 40px; right: 300px; height: 20px;
+    border-bottom: 1px solid #21262d;
+  }
+  .ruler-v {
+    top: 20px; left: 0; width: 20px; bottom: 0;
+    border-right: 1px solid #21262d;
+  }
+
+  /* Info bar */
+  .info-bar {
+    margin-top: 8px; font-size: 11px; color: #8b949e;
+    display: flex; gap: 16px;
+  }
+  .info-bar span { font-weight: 600; color: #58a6ff; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 310px; background: #161b22; border-left: 1px solid #21262d;
+    overflow-y: auto; padding: 16px 14px; display: flex;
+    flex-direction: column; gap: 14px; flex-shrink: 0;
+  }
+  .sidebar h2 {
+    font-size: 11px; font-weight: 600; color: #8b949e;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    padding-bottom: 6px; border-bottom: 1px solid #21262d;
+    margin: 0;
+  }
+  .section { display: flex; flex-direction: column; gap: 6px; }
+  .prop-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .prop-row label {
+    font-size: 11px; color: #8b949e; min-width: 50px; font-weight: 500;
+  }
+  .prop-row input[type="range"] {
+    flex: 1; accent-color: #58a6ff; height: 20px;
+    -webkit-appearance: none; appearance: none;
+    background: transparent; cursor: pointer;
+  }
+  .prop-row input[type="range"]::-webkit-slider-track {
+    height: 4px; background: #21262d; border-radius: 2px;
+  }
+  .prop-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #58a6ff; border: 2px solid #0d1117;
+    margin-top: -5px; cursor: grab;
+  }
+  .prop-row input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; background: #79c0ff; }
+  .prop-row input[type="range"]::-moz-range-track {
+    height: 4px; background: #21262d; border-radius: 2px; border: none;
+  }
+  .prop-row input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #58a6ff; border: 2px solid #0d1117; cursor: grab;
+  }
+  .prop-row .val {
+    font-size: 11px; font-weight: 600; color: #e6edf3;
+    min-width: 32px; text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .prop-row input[type="color"] {
+    width: 28px; height: 22px; border: 1px solid #21262d;
+    border-radius: 4px; background: none; cursor: pointer; padding: 0;
+  }
+  .prop-row input[type="text"] {
+    flex: 1; background: #0d1117; border: 1px solid #21262d;
+    border-radius: 4px; padding: 4px 8px; color: #e6edf3;
+    font-size: 11px; font-family: inherit;
+  }
+  .prop-row select {
+    flex: 1; background: #0d1117; border: 1px solid #21262d;
+    border-radius: 4px; padding: 4px 6px; color: #e6edf3;
+    font-size: 11px; font-family: inherit; cursor: pointer;
+  }
+
+  /* Color palette */
+  .color-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+  }
+  .color-swatch {
+    width: 100%; aspect-ratio: 1; border-radius: 6px; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.15s;
+    position: relative;
+  }
+  .color-swatch:hover { border-color: #58a6ff; transform: scale(1.1); }
+  .color-swatch .tooltip {
+    display: none; position: absolute; bottom: 110%; left: 50%;
+    transform: translateX(-50%); background: #0d1117;
+    border: 1px solid #21262d; border-radius: 4px;
+    padding: 2px 6px; font-size: 9px; color: #8b949e;
+    white-space: nowrap; pointer-events: none;
+  }
+  .color-swatch:hover .tooltip { display: block; }
+
+  /* Card list */
+  .card-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 8px; border-radius: 6px; cursor: pointer;
+    transition: background 0.1s; font-size: 11px;
+  }
+  .card-item:hover { background: #21262d; }
+  .card-item.active { background: #21262d; }
+  .card-item .name { font-weight: 500; }
+  .card-item .coords { color: #58a6ff; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 6px; }
+  .btn {
+    flex: 1; padding: 8px 12px; border: 1px solid #21262d; border-radius: 6px;
+    background: #21262d; color: #e6edf3; font-size: 11px; font-weight: 600;
+    cursor: pointer; text-align: center; transition: all 0.1s;
+  }
+  .btn:hover { background: #30363d; border-color: #58a6ff; }
+  .btn.primary { background: #238636; border-color: #238636; }
+  .btn.primary:hover { background: #2ea043; }
+  .btn.danger { border-color: #f85149; color: #f85149; }
+  .btn.danger:hover { background: #f85149; color: #fff; }
+
+  .no-sel {
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; color: #484f58; font-size: 12px;
+    text-align: center; line-height: 1.5;
+  }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; margin-bottom: 6px; }
+  .tab {
+    flex: 1; padding: 6px; text-align: center; font-size: 11px;
+    font-weight: 600; color: #8b949e; background: #0d1117;
+    border-radius: 6px; cursor: pointer; transition: all 0.1s;
+    border: 1px solid transparent;
+  }
+  .tab.active { color: #e6edf3; background: #21262d; border-color: #30363d; }
+  .tab:hover { color: #e6edf3; }
+
+  /* Modal */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 100; align-items: center; justify-content: center;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: #161b22; border: 1px solid #21262d; border-radius: 10px;
+    padding: 20px; width: 520px; max-height: 80vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 14px; margin-bottom: 10px; }
+  .modal pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 6px;
+    padding: 14px; font-size: 11px; font-family: 'Fira Code', monospace;
+    color: #e6edf3; overflow-x: auto; white-space: pre; line-height: 1.5;
+  }
+  .modal .btn-row { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="canvas-area">
+  <div class="canvas-title">SVG Card Editor v2 — Click card, then click inner elements to edit</div>
+  <div class="svg-wrap">
+    <svg id="main-svg" width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg"
+         font-family="'Segoe UI', -apple-system, sans-serif">
+      <rect width="900" height="500" fill="#0D1117" id="canvas-bg"/>
+      <!-- Guide lines layer -->
+      <g id="guides-layer"></g>
+    </svg>
+  </div>
+  <div class="info-bar">
+    <div>Canvas: <span id="info-canvas">900 × 500</span></div>
+    <div id="info-mouse">Mouse: <span>—</span></div>
+    <div id="info-sel">Selected: <span>None</span></div>
+  </div>
+</div>
+
+<div class="sidebar">
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="layout">Layout</div>
+    <div class="tab" data-tab="style">Style</div>
+    <div class="tab" data-tab="colors">Colors</div>
+  </div>
+
+  <!-- TAB: Layout -->
+  <div id="tab-layout">
+    <h2>Cards</h2>
+    <div id="card-list" class="section"></div>
+
+    <h2>Card Properties</h2>
+    <div id="card-props"></div>
+
+    <h2>Element Properties</h2>
+    <div id="el-props"></div>
+
+    <h2>Canvas</h2>
+    <div class="section">
+      <div class="prop-row"><label>Width</label><input type="range" min="600" max="1200" value="900" id="g-w"><div class="val" id="g-w-v">900</div></div>
+      <div class="prop-row"><label>Height</label><input type="range" min="300" max="800" value="500" id="g-h"><div class="val" id="g-h-v">500</div></div>
+      <div class="prop-row"><label>Radius</label><input type="range" min="0" max="24" value="10" id="g-rx"><div class="val" id="g-rx-v">10</div></div>
+      <div class="prop-row"><label>Padding</label><input type="range" min="8" max="40" value="20" id="g-pad"><div class="val" id="g-pad-v">20</div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="btn-export">Export</button>
+      <button class="btn" id="btn-snap">Snap</button>
+      <button class="btn" id="btn-dist">Distribute</button>
+      <button class="btn danger" id="btn-reset">Reset</button>
+    </div>
+  </div>
+
+  <!-- TAB: Style -->
+  <div id="tab-style" style="display:none">
+    <h2>Typography</h2>
+    <div class="section" id="typo-section">
+      <div class="prop-row"><label>Font</label>
+        <select id="font-family">
+          <option value="'Segoe UI', -apple-system, sans-serif">Segoe UI</option>
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Roboto', sans-serif">Roboto</option>
+          <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+          <option value="'SF Pro', -apple-system, sans-serif">SF Pro</option>
+        </select>
+      </div>
+      <div class="prop-row"><label>Label</label><input type="range" min="8" max="16" value="11" id="fs-label"><div class="val" id="fs-label-v">11</div></div>
+      <div class="prop-row"><label>Primary</label><input type="range" min="18" max="42" value="28" id="fs-primary"><div class="val" id="fs-primary-v">28</div></div>
+      <div class="prop-row"><label>Secondary</label><input type="range" min="10" max="24" value="15" id="fs-secondary"><div class="val" id="fs-secondary-v">15</div></div>
+      <div class="prop-row"><label>Body</label><input type="range" min="10" max="18" value="13" id="fs-body"><div class="val" id="fs-body-v">13</div></div>
+      <div class="prop-row"><label>Sub</label><input type="range" min="8" max="14" value="10" id="fs-sub"><div class="val" id="fs-sub-v">10</div></div>
+    </div>
+
+    <h2>Card Style</h2>
+    <div class="section">
+      <div class="prop-row"><label>Stroke W</label><input type="range" min="0" max="3" step="0.5" value="1" id="card-stroke-w"><div class="val" id="card-stroke-w-v">1</div></div>
+      <div class="prop-row"><label>Opacity</label><input type="range" min="0" max="100" value="100" id="card-opacity"><div class="val" id="card-opacity-v">100</div></div>
+    </div>
+  </div>
+
+  <!-- TAB: Colors -->
+  <div id="tab-colors" style="display:none">
+    <h2>Design System Palette</h2>
+    <div class="section" id="palette-section"></div>
+
+    <h2>Quick Apply</h2>
+    <div class="no-sel" style="padding:12px">Select an inner element, then<br>click a color swatch to apply</div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3>Exported Constants</h3>
+    <pre id="export-code"></pre>
+    <div class="btn-row">
+      <button class="btn primary" id="btn-copy">Copy</button>
+      <button class="btn" id="btn-close-m">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Design System
+// ============================================================
+const DS = {
+  canvas:  { hex: '#0D1117', label: 'Canvas' },
+  surface: { hex: '#161B22', label: 'Surface' },
+  border:  { hex: '#21262D', label: 'Border' },
+  text:    { hex: '#E6EDF3', label: 'Text' },
+  muted:   { hex: '#8B949E', label: 'Muted' },
+  blue:    { hex: '#58A6FF', label: 'Blue' },
+  green:   { hex: '#3FB950', label: 'Green' },
+  violet:  { hex: '#A371F7', label: 'Violet' },
+  amber:   { hex: '#D29922', label: 'Amber' },
+  red:     { hex: '#F85149', label: 'Red' },
+};
+
+// Font scale
+let typo = { label: 11, primary: 28, secondary: 15, body: 13, sub: 10 };
+let fontFamily = "'Segoe UI', -apple-system, sans-serif";
+let cardStrokeW = 1;
+let cardOpacity = 1;
+
+// ============================================================
+// Card state + content elements
+// ============================================================
+const CARDS = [
+  { id:'identity',  label:'IDENTITY',        elements: [
+    { id:'id-name',   type:'text', text:'Shobith S',     x:20, y:44, size:'primary',   weight:600, colorKey:'text' },
+    { id:'id-handle', type:'text', text:'@shobith-s',    x:20, y:64, size:'body',      weight:400, colorKey:'muted' },
+    { id:'id-sep',    type:'line', x1:20, y1:82, x2:262, y2:82, colorKey:'border' },
+    { id:'id-f-val',  type:'text', text:'10',            x:20, y:112, size:'secondary', weight:500, colorKey:'text' },
+    { id:'id-f-lbl',  type:'text', text:'FOLLOWERS',     x:20, y:126, size:'sub',       weight:400, colorKey:'muted' },
+    { id:'id-r-val',  type:'text', text:'56',            x:105, y:112, size:'secondary', weight:500, colorKey:'text' },
+    { id:'id-r-lbl',  type:'text', text:'REPOS',         x:105, y:126, size:'sub',       weight:400, colorKey:'muted' },
+    { id:'id-s-val',  type:'text', text:'42',            x:190, y:112, size:'secondary', weight:500, colorKey:'text' },
+    { id:'id-s-lbl',  type:'text', text:'STARS',         x:190, y:126, size:'sub',       weight:400, colorKey:'muted' },
+  ]},
+  { id:'rank',     label:'OVERALL RANK',     elements: [
+    { id:'rk-track', type:'circle', cx:141, cy:128, r:70, strokeKey:'border', strokeW:8, opacity:0.6 },
+    { id:'rk-arc',   type:'arc',    cx:141, cy:128, r:70, strokeKey:'violet', strokeW:6, pct:62.5 },
+    { id:'rk-val',   type:'text',   text:'A-', x:141, y:124, size:'primary', weight:700, colorKey:'text', anchor:'middle', customSize:36 },
+    { id:'rk-sub',   type:'text',   text:'Top 37.5%', x:141, y:152, size:'label', weight:400, colorKey:'muted', anchor:'middle' },
+  ]},
+  { id:'stats',    label:'CORE STATS',       elements: [
+    { id:'st-c-bg',  type:'rect', x:12, y:50, w:116, h:80, rx:10, colorKey:'border', opacity:0.4 },
+    { id:'st-c-lbl', type:'text', text:'COMMITS', x:34, y:76, size:'sub', weight:400, colorKey:'muted' },
+    { id:'st-c-val', type:'text', text:'828', x:24, y:104, size:'primary', weight:600, colorKey:'green' },
+    { id:'st-p-bg',  type:'rect', x:140, y:50, w:116, h:80, rx:10, colorKey:'border', opacity:0.4 },
+    { id:'st-p-lbl', type:'text', text:'PRS', x:162, y:76, size:'sub', weight:400, colorKey:'muted' },
+    { id:'st-p-val', type:'text', text:'135', x:152, y:104, size:'primary', weight:600, colorKey:'blue' },
+    { id:'st-r-bg',  type:'rect', x:12, y:138, w:116, h:80, rx:10, colorKey:'border', opacity:0.4 },
+    { id:'st-r-lbl', type:'text', text:'REVIEWS', x:34, y:164, size:'sub', weight:400, colorKey:'muted' },
+    { id:'st-r-val', type:'text', text:'39', x:24, y:192, size:'primary', weight:600, colorKey:'amber' },
+    { id:'st-i-bg',  type:'rect', x:140, y:138, w:116, h:80, rx:10, colorKey:'border', opacity:0.4 },
+    { id:'st-i-lbl', type:'text', text:'ISSUES', x:162, y:164, size:'sub', weight:400, colorKey:'muted' },
+    { id:'st-i-val', type:'text', text:'1', x:152, y:192, size:'primary', weight:600, colorKey:'red' },
+  ]},
+  { id:'streaks',  label:'ACTIVITY STREAKS', elements: [
+    { id:'sk-cl',    type:'text', text:'CURRENT STREAK', x:20, y:60, size:'sub', weight:400, colorKey:'muted' },
+    { id:'sk-cv',    type:'text', text:'1', x:42, y:87, size:'primary', weight:600, colorKey:'text' },
+    { id:'sk-cd',    type:'text', text:'days', x:72, y:87, size:'body', weight:400, colorKey:'muted' },
+    { id:'sk-ll',    type:'text', text:'LONGEST STREAK', x:20, y:128, size:'sub', weight:400, colorKey:'muted' },
+    { id:'sk-lv',    type:'text', text:'15', x:42, y:155, size:'primary', weight:600, colorKey:'text' },
+    { id:'sk-ld',    type:'text', text:'days', x:72, y:155, size:'body', weight:400, colorKey:'muted' },
+    { id:'sk-ma',    type:'text', text:'Most Active:  Nov 21', x:42, y:194, size:'label', weight:400, colorKey:'muted' },
+  ]},
+  { id:'languages',label:'TOP LANGUAGES',    elements: [
+    { id:'ln-1n', type:'text', text:'Python',     x:20, y:60, size:'body', weight:400, colorKey:'text' },
+    { id:'ln-1p', type:'text', text:'30%', x:262, y:60, size:'body', weight:400, colorKey:'muted', anchor:'end' },
+    { id:'ln-1t', type:'rect', x:20, y:68, w:242, h:8, rx:4, colorKey:'border', opacity:0.6 },
+    { id:'ln-1b', type:'rect', x:20, y:68, w:73, h:8, rx:4, customColor:'#3572A5', opacity:0.85 },
+    { id:'ln-2n', type:'text', text:'TypeScript', x:20, y:104, size:'body', weight:400, colorKey:'text' },
+    { id:'ln-2p', type:'text', text:'25%', x:262, y:104, size:'body', weight:400, colorKey:'muted', anchor:'end' },
+    { id:'ln-2t', type:'rect', x:20, y:112, w:242, h:8, rx:4, colorKey:'border', opacity:0.6 },
+    { id:'ln-2b', type:'rect', x:20, y:112, w:61, h:8, rx:4, customColor:'#3178c6', opacity:0.85 },
+    { id:'ln-3n', type:'text', text:'JavaScript', x:20, y:148, size:'body', weight:400, colorKey:'text' },
+    { id:'ln-3p', type:'text', text:'14%', x:262, y:148, size:'body', weight:400, colorKey:'muted', anchor:'end' },
+    { id:'ln-3t', type:'rect', x:20, y:156, w:242, h:8, rx:4, colorKey:'border', opacity:0.6 },
+    { id:'ln-3b', type:'rect', x:20, y:156, w:34, h:8, rx:4, customColor:'#f1e05a', opacity:0.85 },
+    { id:'ln-4n', type:'text', text:'HTML', x:20, y:192, size:'body', weight:400, colorKey:'text' },
+    { id:'ln-4p', type:'text', text:'11%', x:262, y:192, size:'body', weight:400, colorKey:'muted', anchor:'end' },
+    { id:'ln-4t', type:'rect', x:20, y:200, w:242, h:8, rx:4, colorKey:'border', opacity:0.6 },
+    { id:'ln-4b', type:'rect', x:20, y:200, w:27, h:8, rx:4, customColor:'#e34c26', opacity:0.85 },
+  ]},
+  { id:'repos',    label:'TOP REPOSITORIES',  elements: [
+    { id:'rp-1d', type:'circle', cx:23, cy:66, r:3, customColor:'#3572A5' },
+    { id:'rp-1n', type:'text', text:'KrishiSevak', x:34, y:70, size:'body', weight:400, colorKey:'text' },
+    { id:'rp-1s', type:'text', text:'★ 5', x:248, y:70, size:'body', weight:400, colorKey:'amber', anchor:'end' },
+    { id:'rp-1l', type:'line', x1:20, y1:92, x2:262, y2:92, colorKey:'border' },
+    { id:'rp-2d', type:'circle', cx:23, cy:124, r:3, customColor:'#3178c6' },
+    { id:'rp-2n', type:'text', text:'nebula-analyzer', x:34, y:128, size:'body', weight:400, colorKey:'text' },
+    { id:'rp-2s', type:'text', text:'★ 3', x:248, y:128, size:'body', weight:400, colorKey:'amber', anchor:'end' },
+    { id:'rp-2l', type:'line', x1:20, y1:150, x2:262, y2:150, colorKey:'border' },
+    { id:'rp-3d', type:'circle', cx:23, cy:182, r:3, customColor:'#f1e05a' },
+    { id:'rp-3n', type:'text', text:'AudioToText', x:34, y:186, size:'body', weight:400, colorKey:'text' },
+    { id:'rp-3s', type:'text', text:'★ 2', x:248, y:186, size:'body', weight:400, colorKey:'amber', anchor:'end' },
+  ]},
+];
+
+const DEFAULT_LAYOUT = {
+  identity:  { x:16, y:16, w:282, h:228 },
+  rank:      { x:314, y:16, w:282, h:228 },
+  stats:     { x:612, y:16, w:282, h:228 },
+  streaks:   { x:16, y:260, w:282, h:228 },
+  languages: { x:314, y:260, w:282, h:228 },
+  repos:     { x:612, y:260, w:282, h:228 },
+};
+
+let layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+let gRx = 10, gPad = 20, cW = 900, cH = 500;
+let selCard = null, selEl = null;
+let dragState = null, resizeState = null, innerDrag = null;
+let guides = [];
+
+const svg = document.getElementById('main-svg');
+const NS = 'http://www.w3.org/2000/svg';
+
+function color(key) { return DS[key]?.hex || key; }
+
+function elColor(el) {
+  if (el.customColor) return el.customColor;
+  return color(el.colorKey || 'text');
+}
+
+function fontSize(sizeKey, el) {
+  if (el?.customSize) return el.customSize;
+  return typo[sizeKey] || 13;
+}
+
+// ============================================================
+// Smart Alignment Guides
+// ============================================================
+function calcGuides(dragId) {
+  guides = [];
+  const d = layout[dragId];
+  const dCx = d.x + d.w / 2, dCy = d.y + d.h / 2;
+  const threshold = 4;
+
+  // Canvas center
+  if (Math.abs(dCx - cW / 2) < threshold) guides.push({ type: 'v', pos: cW / 2, label: 'center' });
+  if (Math.abs(dCy - cH / 2) < threshold) guides.push({ type: 'h', pos: cH / 2, label: 'center' });
+
+  Object.entries(layout).forEach(([id, c]) => {
+    if (id === dragId) return;
+    const cCx = c.x + c.w / 2, cCy = c.y + c.h / 2;
+    if (Math.abs(d.x - c.x) < threshold) guides.push({ type: 'v', pos: c.x });
+    if (Math.abs(d.x + d.w - (c.x + c.w)) < threshold) guides.push({ type: 'v', pos: c.x + c.w });
+    if (Math.abs(d.x - (c.x + c.w)) < threshold) guides.push({ type: 'v', pos: c.x + c.w });
+    if (Math.abs(d.y - c.y) < threshold) guides.push({ type: 'h', pos: c.y });
+    if (Math.abs(d.y + d.h - (c.y + c.h)) < threshold) guides.push({ type: 'h', pos: c.y + c.h });
+    if (Math.abs(dCx - cCx) < threshold) guides.push({ type: 'v', pos: cCx, label: 'align' });
+    if (Math.abs(dCy - cCy) < threshold) guides.push({ type: 'h', pos: cCy, label: 'align' });
+  });
+}
+
+function calcInnerGuides(cardId, dragElId) {
+  guides = [];
+  const card = CARDS.find(c => c.id === cardId);
+  const dragEl = card.elements.find(e => e.id === dragElId);
+  if (!card || !dragEl) return;
+  const cl = layout[cardId];
+  const threshold = 4;
+
+  // Get drag element position in absolute coords
+  const dx = dragEl.x ?? dragEl.cx ?? dragEl.x1 ?? 0;
+  const dy = dragEl.y ?? dragEl.cy ?? dragEl.y1 ?? 0;
+  const dAx = cl.x + dx, dAy = cl.y + dy;
+
+  // Card center guides
+  const cardCx = cl.x + cl.w / 2, cardCy = cl.y + cl.h / 2;
+  if (Math.abs(dAx - cardCx) < threshold) guides.push({ type: 'v', pos: cardCx, label: 'center' });
+  if (Math.abs(dAy - cardCy) < threshold) guides.push({ type: 'h', pos: cardCy, label: 'center' });
+
+  // Card padding guides
+  if (Math.abs(dx - gPad) < threshold) guides.push({ type: 'v', pos: cl.x + gPad, label: 'pad' });
+  if (Math.abs(dy - gPad) < threshold) guides.push({ type: 'h', pos: cl.y + gPad, label: 'pad' });
+
+  // Sibling element guides
+  card.elements.forEach(sib => {
+    if (sib.id === dragElId) return;
+    const sx = sib.x ?? sib.cx ?? sib.x1 ?? 0;
+    const sy = sib.y ?? sib.cy ?? sib.y1 ?? 0;
+    const sAx = cl.x + sx, sAy = cl.y + sy;
+    if (Math.abs(dAx - sAx) < threshold) guides.push({ type: 'v', pos: sAx });
+    if (Math.abs(dAy - sAy) < threshold) guides.push({ type: 'h', pos: sAy });
+  });
+}
+
+function renderGuides() {
+  const layer = document.getElementById('guides-layer');
+  layer.innerHTML = '';
+  guides.forEach(g => {
+    const line = document.createElementNS(NS, 'line');
+    const isCenter = g.label === 'center';
+    const clr = isCenter ? '#A371F7' : '#3FB950';
+    if (g.type === 'v') {
+      line.setAttribute('x1', g.pos); line.setAttribute('y1', 0);
+      line.setAttribute('x2', g.pos); line.setAttribute('y2', cH);
+    } else {
+      line.setAttribute('x1', 0); line.setAttribute('y1', g.pos);
+      line.setAttribute('x2', cW); line.setAttribute('y2', g.pos);
+    }
+    line.setAttribute('stroke', clr);
+    line.setAttribute('stroke-width', '1');
+    line.setAttribute('stroke-dasharray', isCenter ? '8,4' : '4,4');
+    line.setAttribute('opacity', '0.7');
+    line.classList.add('guide-line');
+    layer.appendChild(line);
+  });
+}
+
+// ============================================================
+// Render SVG
+// ============================================================
+function render() {
+  svg.querySelectorAll('.card-group').forEach(e => e.remove());
+  svg.setAttribute('width', cW);
+  svg.setAttribute('height', cH);
+  svg.setAttribute('viewBox', `0 0 ${cW} ${cH}`);
+  svg.setAttribute('font-family', fontFamily);
+  document.getElementById('canvas-bg').setAttribute('fill', DS.canvas.hex);
+
+  CARDS.forEach(card => {
+    const c = layout[card.id];
+    const g = document.createElementNS(NS, 'g');
+    g.classList.add('card-group');
+    g.dataset.id = card.id;
+    if (selCard === card.id) g.classList.add('selected');
+
+    // Card bg
+    const bg = document.createElementNS(NS, 'rect');
+    bg.classList.add('card-bg');
+    Object.entries({x:c.x, y:c.y, width:c.w, height:c.h, rx:gRx,
+      fill:DS.surface.hex, stroke:DS.border.hex, 'stroke-width':cardStrokeW, opacity:cardOpacity}).forEach(([k,v])=>bg.setAttribute(k,v));
+    g.appendChild(bg);
+
+    // Section label
+    const lb = document.createElementNS(NS, 'text');
+    lb.classList.add('card-label');
+    lb.setAttribute('x', c.x + gPad);
+    lb.setAttribute('y', c.y + gPad + 12);
+    lb.setAttribute('font-size', typo.label);
+    lb.setAttribute('font-weight', '600');
+    lb.setAttribute('fill', DS.muted.hex);
+    lb.setAttribute('letter-spacing', '1.2');
+    lb.textContent = card.label;
+    g.appendChild(lb);
+
+    // Inner elements
+    card.elements.forEach(el => {
+      const eg = document.createElementNS(NS, 'g');
+      eg.classList.add('inner-el');
+      eg.dataset.elId = el.id;
+      eg.dataset.cardId = card.id;
+      if (selEl === el.id) eg.classList.add('selected');
+
+      if (el.type === 'text') {
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', c.x + el.x);
+        t.setAttribute('y', c.y + el.y);
+        t.setAttribute('font-size', fontSize(el.size, el));
+        t.setAttribute('font-weight', el.weight || 400);
+        t.setAttribute('fill', elColor(el));
+        if (el.anchor) t.setAttribute('text-anchor', el.anchor);
+        t.textContent = el.text;
+        eg.appendChild(t);
+      } else if (el.type === 'rect') {
+        const r = document.createElementNS(NS, 'rect');
+        r.setAttribute('x', c.x + el.x);
+        r.setAttribute('y', c.y + el.y);
+        r.setAttribute('width', el.w);
+        r.setAttribute('height', el.h);
+        r.setAttribute('rx', el.rx || 0);
+        r.setAttribute('fill', elColor(el));
+        if (el.opacity != null) r.setAttribute('fill-opacity', el.opacity);
+        eg.appendChild(r);
+      } else if (el.type === 'line') {
+        const l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', c.x + el.x1);
+        l.setAttribute('y1', c.y + el.y1);
+        l.setAttribute('x2', c.x + el.x2);
+        l.setAttribute('y2', c.y + el.y2);
+        l.setAttribute('stroke', elColor(el));
+        l.setAttribute('stroke-width', '1');
+        eg.appendChild(l);
+      } else if (el.type === 'circle') {
+        const ci = document.createElementNS(NS, 'circle');
+        ci.setAttribute('cx', c.x + el.cx);
+        ci.setAttribute('cy', c.y + el.cy);
+        ci.setAttribute('r', el.r);
+        if (el.strokeKey) {
+          ci.setAttribute('fill', 'none');
+          ci.setAttribute('stroke', color(el.strokeKey));
+          ci.setAttribute('stroke-width', el.strokeW || 1);
+          if (el.opacity) ci.setAttribute('opacity', el.opacity);
+        } else {
+          ci.setAttribute('fill', elColor(el));
+        }
+        eg.appendChild(ci);
+      } else if (el.type === 'arc') {
+        const ci = document.createElementNS(NS, 'circle');
+        ci.setAttribute('cx', c.x + el.cx);
+        ci.setAttribute('cy', c.y + el.cy);
+        ci.setAttribute('r', el.r);
+        ci.setAttribute('fill', 'none');
+        ci.setAttribute('stroke', color(el.strokeKey));
+        ci.setAttribute('stroke-width', el.strokeW || 6);
+        const circ = 2 * Math.PI * el.r;
+        ci.setAttribute('stroke-dasharray', circ);
+        ci.setAttribute('stroke-dashoffset', circ - (el.pct / 100) * circ);
+        ci.setAttribute('stroke-linecap', 'round');
+        ci.setAttribute('transform', `rotate(-90 ${c.x + el.cx} ${c.y + el.cy})`);
+        eg.appendChild(ci);
+      }
+      g.appendChild(eg);
+    });
+
+    // Resize handle
+    const h = document.createElementNS(NS, 'rect');
+    h.classList.add('resize-handle');
+    h.setAttribute('x', c.x + c.w - 8);
+    h.setAttribute('y', c.y + c.h - 8);
+    h.setAttribute('width', 8);
+    h.setAttribute('height', 8);
+    h.setAttribute('rx', 2);
+    h.dataset.resizeId = card.id;
+    g.appendChild(h);
+
+    svg.appendChild(g);
+  });
+
+  renderGuides();
+  updateUI();
+}
+
+// ============================================================
+// UI Updates
+// ============================================================
+function updateUI() {
+  // Card list
+  const list = document.getElementById('card-list');
+  list.innerHTML = '';
+  CARDS.forEach(card => {
+    const c = layout[card.id];
+    const div = document.createElement('div');
+    div.className = `card-item${selCard === card.id ? ' active' : ''}`;
+    div.innerHTML = `<span class="name" style="color:${selCard===card.id?'#58a6ff':'#e6edf3'}">${card.label}</span><span class="coords">${c.x}, ${c.y}</span>`;
+    div.onclick = () => { selCard = card.id; selEl = null; render(); };
+    list.appendChild(div);
+  });
+
+  // Card props
+  const cp = document.getElementById('card-props');
+  if (!selCard) { cp.innerHTML = '<div class="no-sel">Select a card</div>'; }
+  else {
+    const c = layout[selCard];
+    cp.innerHTML = `<div class="section">
+      ${slider('cx','X',c.x,0,cW-50)} ${slider('cy','Y',c.y,0,cH-50)}
+      ${slider('cw','W',c.w,100,500)} ${slider('ch','H',c.h,80,400)}
+    </div>`;
+    bind('cx', v => { layout[selCard].x = v; render(); });
+    bind('cy', v => { layout[selCard].y = v; render(); });
+    bind('cw', v => { layout[selCard].w = v; render(); });
+    bind('ch', v => { layout[selCard].h = v; render(); });
+  }
+
+  // Element props
+  const ep = document.getElementById('el-props');
+  if (!selEl) { ep.innerHTML = '<div class="no-sel">Click an element inside<br>a card to edit it</div>'; }
+  else {
+    const el = findEl(selEl);
+    if (!el) { ep.innerHTML = '<div class="no-sel">Element not found</div>'; return; }
+    let html = '<div class="section">';
+    if (el.type === 'text') {
+      html += `<div class="prop-row"><label>Text</label><input type="text" id="el-text" value="${el.text}"></div>`;
+      html += slider('el-x','X',el.x,0,400) + slider('el-y','Y',el.y,0,300);
+      html += slider('el-fs','Size',el.customSize || fontSize(el.size, el), 8, 48);
+      html += slider('el-fw','Weight', el.weight, 100, 900);
+      html += `<div class="prop-row"><label>Color</label><input type="color" id="el-color" value="${elColor(el)}"><div class="val" style="font-size:10px">${elColor(el)}</div></div>`;
+    } else if (el.type === 'rect') {
+      html += slider('el-x','X',el.x,0,400) + slider('el-y','Y',el.y,0,300);
+      html += slider('el-w','W',el.w,2,300) + slider('el-h','H',el.h,2,200);
+      html += slider('el-rx','Rx',el.rx||0,0,20);
+      html += `<div class="prop-row"><label>Color</label><input type="color" id="el-color" value="${elColor(el)}"></div>`;
+      html += slider('el-op','Opacity', Math.round((el.opacity ?? 1) * 100), 0, 100);
+    } else if (el.type === 'circle' || el.type === 'arc') {
+      html += slider('el-cx','CX',el.cx,0,400) + slider('el-cy','CY',el.cy,0,300);
+      html += slider('el-r','R',el.r,2,100);
+      if (el.type === 'arc') html += slider('el-pct','%',el.pct,0,100);
+      html += slider('el-sw','Stroke',el.strokeW||1,1,12);
+    } else if (el.type === 'line') {
+      html += slider('el-x1','X1',el.x1,0,400) + slider('el-y1','Y1',el.y1,0,300);
+      html += slider('el-x2','X2',el.x2,0,400) + slider('el-y2','Y2',el.y2,0,300);
+    }
+    html += '</div>';
+    ep.innerHTML = html;
+
+    // Bind element props
+    if (el.type === 'text') {
+      const ti = document.getElementById('el-text');
+      ti.oninput = () => { el.text = ti.value; render(); };
+      bind('el-x', v => { el.x = v; render(); });
+      bind('el-y', v => { el.y = v; render(); });
+      bind('el-fs', v => { el.customSize = v; render(); });
+      bind('el-fw', v => { el.weight = v; render(); });
+      const ci = document.getElementById('el-color');
+      if (ci) ci.oninput = () => { el.customColor = ci.value; el.colorKey = null; render(); };
+    } else if (el.type === 'rect') {
+      bind('el-x', v => { el.x = v; render(); });
+      bind('el-y', v => { el.y = v; render(); });
+      bind('el-w', v => { el.w = v; render(); });
+      bind('el-h', v => { el.h = v; render(); });
+      bind('el-rx', v => { el.rx = v; render(); });
+      bind('el-op', v => { el.opacity = v / 100; render(); });
+      const ci = document.getElementById('el-color');
+      if (ci) ci.oninput = () => { el.customColor = ci.value; el.colorKey = null; render(); };
+    } else if (el.type === 'circle' || el.type === 'arc') {
+      bind('el-cx', v => { el.cx = v; render(); });
+      bind('el-cy', v => { el.cy = v; render(); });
+      bind('el-r', v => { el.r = v; render(); });
+      if (el.type === 'arc') bind('el-pct', v => { el.pct = v; render(); });
+      bind('el-sw', v => { el.strokeW = v; render(); });
+    } else if (el.type === 'line') {
+      bind('el-x1', v => { el.x1 = v; render(); });
+      bind('el-y1', v => { el.y1 = v; render(); });
+      bind('el-x2', v => { el.x2 = v; render(); });
+      bind('el-y2', v => { el.y2 = v; render(); });
+    }
+  }
+
+  // Info bar
+  document.getElementById('info-canvas').textContent = `${cW} × ${cH}`;
+  const selName = selEl ? selEl : (selCard ? CARDS.find(c=>c.id===selCard)?.label : 'None');
+  document.getElementById('info-sel').innerHTML = `Selected: <span>${selName}</span>`;
+}
+
+function findEl(elId) {
+  for (const card of CARDS) {
+    const el = card.elements.find(e => e.id === elId);
+    if (el) return el;
+  }
+  return null;
+}
+
+function slider(id, label, val, min, max) {
+  return `<div class="prop-row"><label>${label}</label><input type="range" min="${min}" max="${max}" value="${val}" id="${id}"><div class="val" id="${id}-v">${val}</div></div>`;
+}
+function bind(id, cb) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.oninput = () => { const v = parseFloat(el.value); document.getElementById(id+'-v').textContent = Math.round(v); cb(v); };
+}
+
+// ============================================================
+// Color palette
+// ============================================================
+function renderPalette() {
+  const sec = document.getElementById('palette-section');
+  sec.innerHTML = '';
+  Object.entries(DS).forEach(([key, val]) => {
+    const row = document.createElement('div');
+    row.className = 'prop-row';
+    row.innerHTML = `
+      <label>${val.label}</label>
+      <input type="color" id="ds-${key}" value="${val.hex}">
+      <div class="val" style="font-size:10px">${val.hex}</div>
+    `;
+    sec.appendChild(row);
+    setTimeout(() => {
+      const inp = document.getElementById(`ds-${key}`);
+      if (inp) inp.oninput = () => { DS[key].hex = inp.value; inp.nextElementSibling.textContent = inp.value; render(); };
+    }, 0);
+  });
+}
+
+// ============================================================
+// Mouse events
+// ============================================================
+svg.addEventListener('mousedown', e => {
+  const handle = e.target.closest('.resize-handle');
+  if (handle) {
+    const id = handle.dataset.resizeId;
+    selCard = id; selEl = null;
+    const pt = svgPt(e);
+    resizeState = { id, sx: pt.x, sy: pt.y, ow: layout[id].w, oh: layout[id].h };
+    render(); return;
+  }
+
+  const inner = e.target.closest('.inner-el');
+  if (inner && selCard === inner.dataset.cardId) {
+    const elId = inner.dataset.elId;
+    const el = findEl(elId);
+    selEl = elId;
+    if (el) {
+      const pt = svgPt(e);
+      const cl = layout[selCard];
+      const ex = el.x ?? el.cx ?? el.x1 ?? 0;
+      const ey = el.y ?? el.cy ?? el.y1 ?? 0;
+      innerDrag = { elId, cardId: selCard, ox: pt.x - cl.x - ex, oy: pt.y - cl.y - ey, posKey: el.x != null ? 'xy' : el.cx != null ? 'cxy' : 'x1y1' };
+    }
+    render(); return;
+  }
+
+  const group = e.target.closest('.card-group');
+  if (!group) { selCard = null; selEl = null; render(); return; }
+  const id = group.dataset.id;
+  selCard = id; selEl = null;
+  const pt = svgPt(e);
+  dragState = { id, ox: pt.x - layout[id].x, oy: pt.y - layout[id].y };
+  render();
+});
+
+svg.addEventListener('mousemove', e => {
+  const pt = svgPt(e);
+  document.getElementById('info-mouse').innerHTML = `Mouse: <span>${Math.round(pt.x)}, ${Math.round(pt.y)}</span>`;
+
+  if (innerDrag) {
+    const el = findEl(innerDrag.elId);
+    const cl = layout[innerDrag.cardId];
+    if (el) {
+      let nx = Math.round(pt.x - cl.x - innerDrag.ox);
+      let ny = Math.round(pt.y - cl.y - innerDrag.oy);
+      nx = Math.max(0, Math.min(cl.w, nx));
+      ny = Math.max(0, Math.min(cl.h, ny));
+
+      if (innerDrag.posKey === 'xy') { el.x = nx; el.y = ny; }
+      else if (innerDrag.posKey === 'cxy') { el.cx = nx; el.cy = ny; }
+      else { el.x1 = nx; el.y1 = ny; }
+
+      calcInnerGuides(innerDrag.cardId, innerDrag.elId);
+      // Snap to inner guides
+      guides.forEach(g => {
+        const eAx = cl.x + (el.x ?? el.cx ?? el.x1 ?? 0);
+        const eAy = cl.y + (el.y ?? el.cy ?? el.y1 ?? 0);
+        if (g.type === 'v' && Math.abs(eAx - g.pos) < 4) {
+          if (el.x != null) el.x = g.pos - cl.x;
+          else if (el.cx != null) el.cx = g.pos - cl.x;
+          else if (el.x1 != null) el.x1 = g.pos - cl.x;
+        }
+        if (g.type === 'h' && Math.abs(eAy - g.pos) < 4) {
+          if (el.y != null) el.y = g.pos - cl.y;
+          else if (el.cy != null) el.cy = g.pos - cl.y;
+          else if (el.y1 != null) el.y1 = g.pos - cl.y;
+        }
+      });
+      render();
+    }
+    return;
+  }
+  if (dragState) {
+    const c = layout[dragState.id];
+    c.x = Math.round(Math.max(0, Math.min(cW - c.w, pt.x - dragState.ox)));
+    c.y = Math.round(Math.max(0, Math.min(cH - c.h, pt.y - dragState.oy)));
+    calcGuides(dragState.id);
+    guides.forEach(g => {
+      if (g.type === 'v') {
+        if (Math.abs(c.x - g.pos) < 4) c.x = g.pos;
+        if (Math.abs(c.x + c.w/2 - g.pos) < 4) c.x = g.pos - c.w/2;
+        if (Math.abs(c.x + c.w - g.pos) < 4) c.x = g.pos - c.w;
+      } else {
+        if (Math.abs(c.y - g.pos) < 4) c.y = g.pos;
+        if (Math.abs(c.y + c.h/2 - g.pos) < 4) c.y = g.pos - c.h/2;
+        if (Math.abs(c.y + c.h - g.pos) < 4) c.y = g.pos - c.h;
+      }
+    });
+    render();
+  }
+  if (resizeState) {
+    const c = layout[resizeState.id];
+    c.w = Math.round(Math.max(100, resizeState.ow + pt.x - resizeState.sx));
+    c.h = Math.round(Math.max(80, resizeState.oh + pt.y - resizeState.sy));
+    render();
+  }
+});
+
+window.addEventListener('mouseup', () => { dragState = null; resizeState = null; innerDrag = null; guides = []; renderGuides(); });
+
+function svgPt(e) {
+  const ctm = svg.getScreenCTM();
+  return { x: (e.clientX - ctm.e) / ctm.a, y: (e.clientY - ctm.f) / ctm.d };
+}
+
+// ============================================================
+// Tabs
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    ['layout','style','colors'].forEach(id => {
+      document.getElementById('tab-'+id).style.display = tab.dataset.tab === id ? '' : 'none';
+    });
+  };
+});
+
+// ============================================================
+// Global controls
+// ============================================================
+[['g-w','cW'],['g-h','cH'],['g-rx','gRx'],['g-pad','gPad']].forEach(([id, key]) => {
+  const el = document.getElementById(id);
+  el.oninput = () => {
+    const v = parseInt(el.value);
+    document.getElementById(id+'-v').textContent = v;
+    if (key==='cW') cW=v; else if (key==='cH') cH=v;
+    else if (key==='gRx') gRx=v; else if (key==='gPad') gPad=v;
+    render();
+  };
+});
+
+// Typography controls
+['label','primary','secondary','body','sub'].forEach(k => {
+  const el = document.getElementById('fs-'+k);
+  if (el) el.oninput = () => {
+    typo[k] = parseInt(el.value);
+    document.getElementById('fs-'+k+'-v').textContent = el.value;
+    render();
+  };
+});
+document.getElementById('font-family').onchange = function() { fontFamily = this.value; render(); };
+document.getElementById('card-stroke-w').oninput = function() { cardStrokeW = parseFloat(this.value); document.getElementById('card-stroke-w-v').textContent = this.value; render(); };
+document.getElementById('card-opacity').oninput = function() { cardOpacity = parseInt(this.value)/100; document.getElementById('card-opacity-v').textContent = this.value; render(); };
+
+// ============================================================
+// Buttons
+// ============================================================
+document.getElementById('btn-reset').onclick = () => {
+  layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+  gRx=10; gPad=20; cW=900; cH=500; selCard=null; selEl=null;
+  document.getElementById('g-w').value=900; document.getElementById('g-h').value=500;
+  document.getElementById('g-rx').value=10; document.getElementById('g-pad').value=20;
+  ['g-w','g-h','g-rx','g-pad'].forEach(id => document.getElementById(id+'-v').textContent = document.getElementById(id).value);
+  render();
+};
+
+document.getElementById('btn-snap').onclick = () => {
+  Object.keys(layout).forEach(id => {
+    ['x','y','w','h'].forEach(k => layout[id][k] = Math.round(layout[id][k] / 2) * 2);
+  }); render();
+};
+
+document.getElementById('btn-dist').onclick = () => {
+  const gap=16, pad=16, cols=3, rows=2;
+  const cw = Math.floor((cW - pad*2 - gap*(cols-1)) / cols);
+  const ch = Math.floor((cH - pad*2 - gap*(rows-1)) / rows);
+  ['identity','rank','stats','streaks','languages','repos'].forEach((id,i) => {
+    layout[id] = { x: pad + (i%cols)*(cw+gap), y: pad + Math.floor(i/cols)*(ch+gap), w:cw, h:ch };
+  }); render();
+};
+
+// Export
+document.getElementById('btn-export').onclick = () => {
+  let code = `const GRID = {\n  cols: [${layout.identity.x}, ${layout.rank.x}, ${layout.stats.x}],\n  rows: [${layout.identity.y}, ${layout.streaks.y}],\n  cardW: ${layout.identity.w},\n  cardH: ${layout.identity.h},\n  pad: ${gPad},\n};\n\n// Canvas: ${cW} × ${cH}  |  rx: ${gRx}\n// Font: ${fontFamily}\n// Typography: label=${typo.label} primary=${typo.primary} secondary=${typo.secondary} body=${typo.body} sub=${typo.sub}\n\n// DS palette:\n${Object.entries(DS).map(([k,v])=>`//   ${k}: '${v.hex}'`).join('\n')}`;
+
+  // Export all inner element positions
+  code += '\n\n// ═══ ELEMENT POSITIONS ═══\n';
+  CARDS.forEach(card => {
+    code += `\n// ${card.label}\n`;
+    card.elements.forEach(el => {
+      if (el.type === 'text') {
+        code += `// ${el.id}: text="${el.text}" x=${el.x} y=${el.y} size=${el.customSize || fontSize(el.size, el)} weight=${el.weight} color=${elColor(el)}\n`;
+      } else if (el.type === 'rect') {
+        code += `// ${el.id}: rect x=${el.x} y=${el.y} w=${el.w} h=${el.h} rx=${el.rx||0} color=${elColor(el)} opacity=${el.opacity ?? 1}\n`;
+      } else if (el.type === 'circle') {
+        code += `// ${el.id}: circle cx=${el.cx} cy=${el.cy} r=${el.r} color=${el.customColor || color(el.strokeKey || el.colorKey || 'border')} strokeW=${el.strokeW||0}\n`;
+      } else if (el.type === 'arc') {
+        code += `// ${el.id}: arc cx=${el.cx} cy=${el.cy} r=${el.r} pct=${el.pct} strokeW=${el.strokeW||6}\n`;
+      } else if (el.type === 'line') {
+        code += `// ${el.id}: line x1=${el.x1} y1=${el.y1} x2=${el.x2} y2=${el.y2}\n`;
+      }
+    });
+  });
+
+  document.getElementById('export-code').textContent = code;
+  document.getElementById('modal').classList.add('show');
+};
+document.getElementById('btn-copy').onclick = () => {
+  navigator.clipboard.writeText(document.getElementById('export-code').textContent).then(() => {
+    document.getElementById('btn-copy').textContent = '✓ Copied!';
+    setTimeout(() => document.getElementById('btn-copy').textContent = 'Copy', 1500);
+  });
+};
+document.getElementById('btn-close-m').onclick = () => document.getElementById('modal').classList.remove('show');
+
+// Keyboard
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { document.getElementById('modal').classList.remove('show'); selCard=null; selEl=null; render(); }
+  if (!selCard || e.target.tagName === 'INPUT') return;
+  const step = e.shiftKey ? 10 : 1;
+  const c = layout[selCard];
+  if (e.key==='ArrowLeft')  { c.x = Math.max(0, c.x-step); render(); e.preventDefault(); }
+  if (e.key==='ArrowRight') { c.x = Math.min(cW-c.w, c.x+step); render(); e.preventDefault(); }
+  if (e.key==='ArrowUp')    { c.y = Math.max(0, c.y-step); render(); e.preventDefault(); }
+  if (e.key==='ArrowDown')  { c.y = Math.min(cH-c.h, c.y+step); render(); e.preventDefault(); }
+});
+
+// ============================================================
+// Init
+// ============================================================
+renderPalette();
+render();
+</script>
+</body>
+</html>
